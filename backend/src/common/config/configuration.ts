@@ -13,10 +13,7 @@ export default () => ({
     username: process.env.POSTGRES_USER,
     password: process.env.POSTGRES_PASSWORD,
     database: process.env.POSTGRES_DB,
-    synchronize:
-      process.env.NODE_ENV === 'production'
-        ? false
-        : process.env.POSTGRES_SYNCHRONIZE === 'true',
+    synchronize: process.env.POSTGRES_SYNCHRONIZE === 'true',
     dropSchema:
       process.env.NODE_ENV === 'production'
         ? false

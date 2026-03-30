@@ -1,0 +1,1 @@
+This is not a valid image file. Used for testing invalid file upload scenarios.

@@ -1,0 +1,70 @@
+/** Centralized API endpoint paths */
+export const API_ENDPOINTS = {
+  AUTH: {
+    LOGIN: '/auth/login',
+    SIGNUP: '/auth/signup',
+    LOGOUT: '/auth/logout',
+    REFRESH: '/auth/refresh',
+    GOOGLE: '/auth/google',
+    SEND_CODE: '/auth/email/send-code',
+    VERIFY_CODE: '/auth/email/verify-code',
+    RESET_PASSWORD: '/auth/password/reset',
+  },
+  USERS: {
+    ME: '/users/me',
+    ME_PASSWORD: '/users/me/password',
+    ME_BOOKMARKS: '/users/me/bookmarks',
+    ME_PROFILE_IMAGE: '/users/me/profile-image',
+  },
+  BARS: {
+    SEARCH: '/bars/search',
+    NEARBY: '/bars/nearby',
+    LIST: '/bars',
+    MY: '/bars/my',
+    DETAIL: (id: number) => `/bars/${id}` as const,
+    BOOKMARK: (barId: number) => `/bars/${barId}/bookmark` as const,
+    PHOTOS: (barId: number) => `/bars/${barId}/photos` as const,
+    PHOTO: (barId: number, photoId: number) => `/bars/${barId}/photos/${photoId}` as const,
+  },
+  REVIEWS: {
+    CREATE: '/reviews',
+    BY_BAR: (barId: number) => `/bars/${barId}/reviews` as const,
+    MY_REVIEW: (barId: number) => `/bars/${barId}/my-review` as const,
+    UPDATE: (reviewId: number) => `/reviews/${reviewId}` as const,
+    DELETE: (reviewId: number) => `/reviews/${reviewId}` as const,
+    PHOTOS: (reviewId: number) => `/reviews/${reviewId}/photos` as const,
+    PHOTO: (reviewId: number, photoId: number) => `/reviews/${reviewId}/photos/${photoId}` as const,
+    REPORT: (reviewId: number) => `/reviews/${reviewId}/report` as const,
+  },
+  MAPS: {
+    DIRECTIONS: '/maps/directions',
+    ADDRESS_SEARCH: '/maps/address/search',
+  },
+  ADMIN: {
+    DASHBOARD: '/admin/dashboard',
+    BARS: {
+      LIST: '/admin/bars',
+      DETAIL: (id: number) => `/admin/bars/${id}` as const,
+      APPROVE: (id: number) => `/admin/bars/${id}/approve` as const,
+      REJECT: (id: number) => `/admin/bars/${id}/reject` as const,
+      DELETE: (id: number) => `/admin/bars/${id}` as const,
+    },
+    USERS: {
+      LIST: '/admin/users',
+      DETAIL: (id: number) => `/admin/users/${id}` as const,
+      SUSPEND: (id: number) => `/admin/users/${id}/suspend` as const,
+      ACTIVATE: (id: number) => `/admin/users/${id}/activate` as const,
+      ROLE: (id: number) => `/admin/users/${id}/role` as const,
+    },
+    REVIEWS: {
+      MODERATE: (reviewId: number) => `/admin/reviews/${reviewId}/status` as const,
+      DELETE: (reviewId: number) => `/admin/reviews/${reviewId}` as const,
+    },
+    REVIEW_REPORTS: {
+      LIST: '/admin/review-reports',
+      DETAIL: (id: number) => `/admin/review-reports/${id}` as const,
+      RESOLVE: (id: number) => `/admin/review-reports/${id}/resolve` as const,
+    },
+    ACTIONS: '/admin/actions',
+  },
+} as const;

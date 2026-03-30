@@ -1,0 +1,46 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build output
+dist/
+.next/
+.swc/
+out/
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# OS
+.DS_Store
+
+# Test / Coverage
+coverage/
+test-results/
+playwright-report/
+blob-report/
+playwright/.cache/
+frontend/e2e/.auth/
+
+# IDE / Tools
+*.tsbuildinfo
+next-env.d.ts
+pnpm-debug.log*
+*.skill
+.vercel
+
+# Claude Code (CLAUDE.md만 유지)
+.claude/*
+!.claude/CLAUDE.md
+backend/.claude/
+frontend/.claude/
+
+# Docs — architecture, testing만 공개
+docs/*
+!docs/architecture/
+!docs/testing/
+
+# PRD (내부 제품 요구사항)
+prd/

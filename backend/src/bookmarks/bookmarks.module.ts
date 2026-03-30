@@ -1,0 +1,14 @@
+import { Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { Bookmark } from '../entities/bookmark.entity.js';
+import { Bar } from '../entities/bar.entity.js';
+import { BookmarksService } from './bookmarks.service.js';
+import { BookmarksController } from './bookmarks.controller.js';
+
+@Module({
+  imports: [TypeOrmModule.forFeature([Bookmark, Bar])],
+  controllers: [BookmarksController],
+  providers: [BookmarksService],
+  exports: [BookmarksService],
+})
+export class BookmarksModule {}

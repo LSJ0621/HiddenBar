@@ -1,0 +1,29 @@
+{
+  "name": "my-project",
+  "version": "0.0.0",
+  "private": true,
+  "packageManager": "pnpm@10.23.0",
+  "scripts": {
+    "dev:backend": "pnpm --filter @my-project/backend dev",
+    "dev:frontend": "pnpm --filter @my-project/frontend dev",
+    "build:backend": "pnpm --filter @my-project/backend build",
+    "build:frontend": "pnpm --filter @my-project/frontend build",
+    "test:backend": "pnpm --filter @my-project/backend test",
+    "test:frontend": "pnpm --filter @my-project/frontend test",
+    "test": "pnpm -r test",
+    "build": "pnpm -r build",
+    "lint": "pnpm -r lint"
+  },
+  "engines": {
+    "node": ">=22.0.0",
+    "pnpm": ">=10.0.0"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "bcrypt"
+    ]
+  },
+  "devDependencies": {
+    "tsx": "^4.21.0"
+  }
+}

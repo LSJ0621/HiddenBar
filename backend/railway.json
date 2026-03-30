@@ -1,0 +1,13 @@
+{
+  "$schema": "https://railway.com/railway.schema.json",
+  "build": {
+    "builder": "RAILPACK",
+    "buildCommand": "pnpm --filter @my-project/backend build",
+    "watchPatterns": ["/backend/**", "/packages/shared/**"]
+  },
+  "deploy": {
+    "startCommand": "pnpm --filter @my-project/backend start:prod",
+    "restartPolicyType": "ON_FAILURE",
+    "restartPolicyMaxRetries": 10
+  }
+}

@@ -2,7 +2,7 @@
   "$schema": "https://railway.com/railway.schema.json",
   "build": {
     "builder": "RAILPACK",
-    "buildCommand": "pnpm --filter @my-project/backend build",
+    "buildCommand": "pnpm --filter @my-project/shared build && pnpm --filter @my-project/backend build",
     "watchPatterns": ["/backend/**", "/packages/shared/**"]
   },
   "deploy": {

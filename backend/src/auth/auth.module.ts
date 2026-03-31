@@ -51,7 +51,7 @@ import { AuthPasswordService } from './auth-password.service.js';
           from: `"${configService.get<string>('email.fromName')}" <${configService.get<string>('email.address')}>`,
         },
         template: {
-          dir: join(__dirname, '..', '..', '..', 'templates', 'email'),
+          dir: join(__dirname, '..', 'templates', 'email'),
           adapter: new HandlebarsAdapter(),
           options: {
             strict: true,

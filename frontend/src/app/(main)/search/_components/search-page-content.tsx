@@ -369,9 +369,47 @@ function SearchPageContentInner() {
               headerDisabled
               pixelOffset={[0, -32]}
             >
+              {/* 모바일: 가로 컴팩트 레이아웃 */}
               <Link
                 href={`/bars/${selectedBar.id}`}
-                className="block w-[200px] no-underline"
+                className="flex w-[200px] gap-2 no-underline md:hidden"
+              >
+                {selectedBar.thumbnail ? (
+                  <div className="relative size-[60px] shrink-0 overflow-hidden rounded">
+                    <Image
+                      src={selectedBar.thumbnail}
+                      alt={selectedBar.name}
+                      fill
+                      className="object-cover"
+                      sizes="60px"
+                    />
+                  </div>
+                ) : (
+                  <div className="flex size-[60px] shrink-0 items-center justify-center rounded bg-muted">
+                    <ImageOff className="size-4 text-muted-foreground" />
+                  </div>
+                )}
+                <div className="flex min-w-0 flex-col justify-center">
+                  <p className="m-0 truncate text-sm font-semibold text-black">
+                    {selectedBar.name}
+                  </p>
+                  <p className="m-0 mt-0.5 truncate text-xs text-muted-foreground">
+                    {selectedBar.address}
+                  </p>
+                  {selectedBar.averageRating > 0 && (
+                    <p className="m-0 mt-0.5 text-xs text-amber-600">
+                      ★ {selectedBar.averageRating.toFixed(1)}
+                      <span className="ml-1 text-muted-foreground">
+                        ({selectedBar.reviewCount})
+                      </span>
+                    </p>
+                  )}
+                </div>
+              </Link>
+              {/* 데스크탑: 세로 레이아웃 */}
+              <Link
+                href={`/bars/${selectedBar.id}`}
+                className="hidden w-[200px] no-underline md:block"
               >
                 {selectedBar.thumbnail ? (
                   <div className="relative mb-1.5 h-[100px] w-full overflow-hidden rounded">

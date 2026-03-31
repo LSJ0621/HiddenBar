@@ -2,7 +2,10 @@
 
 import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import { useQueryStates, parseAsFloat, parseAsString, parseAsStringLiteral } from 'nuqs';
-import { AdvancedMarker } from '@vis.gl/react-google-maps';
+import { AdvancedMarker, InfoWindow } from '@vis.gl/react-google-maps';
+import Image from 'next/image';
+import Link from 'next/link';
+import { ImageOff } from 'lucide-react';
 import { toast } from 'sonner';
 import { useSearchByAddress, useSearchByName } from '@/hooks/queries/use-search';
 import { useUserLocation } from '@/hooks/use-user-location';
@@ -86,6 +89,8 @@ function SearchPageContentInner() {
   const { location, isLoading: isLocationLoading, isPermissionDenied, requestLocation } = useUserLocation();
   const [locationBannerDismissed, setLocationBannerDismissed] = useState(false);
 
+  /** 선택된 바 (InfoWindow 표시용) */
+  const [selectedBar, setSelectedBar] = useState<BarSummary | null>(null);
   /** 지도 클릭 핀 (map 탭 전용) */
   const [mapPin, setMapPin] = useState<{ lat: number; lng: number } | null>(null);
   /** 지도에 표시할 바 목록 (검색 결과 0건 시 이전 결과 유지) */
@@ -196,6 +201,7 @@ function SearchPageContentInner() {
     if (isLoading) return;
     if (bars.length > 0) {
       setDisplayedBars(bars);
+      setSelectedBar(null);
     } else if (hasResults && bars.length === 0) {
       toast.info('No results found', { description: 'Showing previous results on map.' });
     }
@@ -309,14 +315,13 @@ function SearchPageContentInner() {
         <MapView
           center={mapCenter}
           className="h-[200px] overflow-hidden rounded-lg md:h-full md:rounded-none"
-          onMapClick={
-            tab === 'map'
-              ? (e) => {
-                  const latLng = e.detail.latLng;
-                  if (latLng) setMapPin({ lat: latLng.lat, lng: latLng.lng });
-                }
-              : undefined
-          }
+          onMapClick={(e) => {
+            setSelectedBar(null);
+            if (tab === 'map') {
+              const latLng = e.detail.latLng;
+              if (latLng) setMapPin({ lat: latLng.lat, lng: latLng.lng });
+            }
+          }}
         >
           {mapCenter && <UserLocationDot position={mapCenter} />}
           {tab === 'map' && mapPin && (
@@ -352,8 +357,54 @@ function SearchPageContentInner() {
             </AdvancedMarker>
           )}
           {displayedBars.map((bar) => (
-            <BarMarker key={bar.id} bar={bar} />
+            <BarMarker
+              key={bar.id}
+              bar={bar}
+              onClick={() => setSelectedBar(selectedBar?.id === bar.id ? null : bar)}
+            />
           ))}
+          {selectedBar && (
+            <InfoWindow
+              position={{ lat: selectedBar.latitude, lng: selectedBar.longitude }}
+              headerDisabled
+              pixelOffset={[0, -32]}
+            >
+              <Link
+                href={`/bars/${selectedBar.id}`}
+                className="block w-[200px] no-underline"
+              >
+                {selectedBar.thumbnail ? (
+                  <div className="relative mb-1.5 h-[100px] w-full overflow-hidden rounded">
+                    <Image
+                      src={selectedBar.thumbnail}
+                      alt={selectedBar.name}
+                      fill
+                      className="object-cover"
+                      sizes="200px"
+                    />
+                  </div>
+                ) : (
+                  <div className="mb-1.5 flex h-[100px] w-full items-center justify-center rounded bg-muted">
+                    <ImageOff className="size-6 text-muted-foreground" />
+                  </div>
+                )}
+                <p className="m-0 text-sm font-semibold text-black">
+                  {selectedBar.name}
+                </p>
+                <p className="m-0 mt-0.5 text-xs text-muted-foreground">
+                  {selectedBar.address}
+                </p>
+                {selectedBar.averageRating > 0 && (
+                  <p className="m-0 mt-1 text-xs text-amber-600">
+                    ★ {selectedBar.averageRating.toFixed(1)}
+                    <span className="ml-1 text-muted-foreground">
+                      ({selectedBar.reviewCount})
+                    </span>
+                  </p>
+                )}
+              </Link>
+            </InfoWindow>
+          )}
           {displayedBars.length > 0 && (
             <SearchFitBounds
               points={displayedBars.map((b) => ({ lat: b.latitude, lng: b.longitude }))}

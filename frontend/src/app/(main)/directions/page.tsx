@@ -1,5 +1,6 @@
 import { Suspense } from 'react';
 import { GoogleMapsProvider } from '@/components/map/google-maps-provider';
+import { LocationProvider } from '@/providers/location-provider';
 import { DirectionsPageContent } from './_components/directions-page-content';
 
 export const metadata = {
@@ -8,16 +9,18 @@ export const metadata = {
 
 export default function DirectionsPage() {
   return (
-    <GoogleMapsProvider>
-      <Suspense
+    <LocationProvider>
+      <GoogleMapsProvider>
+        <Suspense
         fallback={
           <div className="container mx-auto flex min-h-[50vh] items-center justify-center px-4">
             <p className="text-muted-foreground">Loading directions...</p>
           </div>
         }
       >
-        <DirectionsPageContent />
-      </Suspense>
-    </GoogleMapsProvider>
+          <DirectionsPageContent />
+        </Suspense>
+      </GoogleMapsProvider>
+    </LocationProvider>
   );
 }

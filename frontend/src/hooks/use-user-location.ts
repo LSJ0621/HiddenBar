@@ -74,6 +74,14 @@ export const useUserLocation = (
     fetchGeolocation(handleSuccess, handleError);
   }, [handleSuccess, handleError]);
 
+  // LocationProvider 내부에서 watch 모드 요청 시 enableWatch를 useEffect로 호출
+  const ctxEnableWatch = ctx?.enableWatch;
+  useEffect(() => {
+    if (ctxEnableWatch && watch) {
+      ctxEnableWatch();
+    }
+  }, [ctxEnableWatch, watch]);
+
   useEffect(() => {
     // Context가 있으면 standalone geolocation을 호출하지 않음
     if (hasCtx || !isGeolocationAvailable) {
@@ -95,9 +103,6 @@ export const useUserLocation = (
 
   // LocationProvider 내부: Context에서 위치 정보 사용
   if (ctx) {
-    if (watch) {
-      ctx.enableWatch();
-    }
     return {
       location: ctx.location,
       error: ctx.error,

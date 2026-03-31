@@ -63,7 +63,10 @@ export function DirectionsSheet({ bar, open, onOpenChange }: DirectionsSheetProp
   /** sessionStorage에 바 정보 캐싱 후 /directions로 이동 */
   const handleGetDirections = () => {
     sessionStorage.setItem('directions-bar', JSON.stringify(bar));
-    sessionStorage.removeItem('directions-cache');
+    // 새 바 선택이므로 기존 경로 캐시 전체 삭제
+    Object.values(TravelMode).forEach((m) => {
+      sessionStorage.removeItem(`directions-cache-${m}`);
+    });
     router.push('/directions');
   };
 

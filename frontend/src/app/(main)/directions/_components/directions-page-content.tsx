@@ -1,9 +1,11 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useQueryClient } from '@tanstack/react-query';
-import { Navigation, RefreshCw } from 'lucide-react';
+import { toast } from 'sonner';
+import { Navigation, RefreshCw, X } from 'lucide-react';
 import { TravelMode } from '@/types';
 import type { DirectionsResponse } from '@/types';
 import { useDirections } from '@/hooks/queries/use-maps';
@@ -24,10 +26,45 @@ import { RouteSelector } from '@/components/map/route-selector';
 
 import type { DirectionsTargetBar } from '@/components/map/directions-sheet';
 
-const DIRECTIONS_CACHE_KEY = 'directions-cache';
+/** mode별 sessionStorage 캐시 키 */
+const getDirectionsCacheKey = (mode: TravelMode) => `directions-cache-${mode}`;
+
+/** 메타데이터를 포함한 경로 캐시 구조 */
+interface DirectionsCache {
+  origin: { lat: number; lng: number };
+  destination: { lat: number; lng: number };
+  mode: TravelMode;
+  data: DirectionsResponse;
+}
+
+/** 모든 mode의 경로 캐시를 삭제한다 */
+function clearAllDirectionsCache() {
+  Object.values(TravelMode).forEach((m) => {
+    sessionStorage.removeItem(getDirectionsCacheKey(m));
+  });
+}
+
+/** 현재 mode의 sessionStorage 캐시를 로드하고 destination 일치 여부를 검증한다 */
+function loadDirectionsCache(
+  mode: TravelMode,
+  dest: { lat: number; lng: number } | null,
+): DirectionsCache | null {
+  if (typeof window === 'undefined') return null;
+  const stored = sessionStorage.getItem(getDirectionsCacheKey(mode));
+  if (stored) {
+    try {
+      const parsed = JSON.parse(stored) as DirectionsCache;
+      if (parsed.destination.lat === dest?.lat && parsed.destination.lng === dest?.lng) {
+        return parsed;
+      }
+    } catch { /* */ }
+  }
+  return null;
+}
 
 /** 경로 탭 메인 클라이언트 컴포넌트 */
 export function DirectionsPageContent() {
+  const router = useRouter();
   const [bar] = useState<DirectionsTargetBar | null>(() => {
     if (typeof window === 'undefined') return null;
     const stored = sessionStorage.getItem('directions-bar');
@@ -45,49 +82,86 @@ export function DirectionsPageContent() {
 
   // SSR 레이아웃 플래시 방지
   const { matches: isDesktop, mounted } = useMediaQuery('(min-width: 1024px)');
-  const { location } = useUserLocation();
+  const { location } = useUserLocation({ watch: true });
 
-  const origin = location
+  const destination = useMemo(
+    () => (bar ? { lat: bar.latitude, lng: bar.longitude } : null),
+    [bar],
+  );
+
+  // mode별 sessionStorage 캐시 (mode 변경 시 자동 재로드)
+  const [cachedDirections, setCachedDirections] = useState<DirectionsCache | null>(
+    () => loadDirectionsCache(mode, destination),
+  );
+  const [prevMode, setPrevMode] = useState(mode);
+  if (mode !== prevMode) {
+    setPrevMode(mode);
+    setCachedDirections(loadDirectionsCache(mode, destination));
+  }
+
+  // 지도 표시용 실시간 위치
+  const preciseOrigin = location
     ? { lat: location.latitude, lng: location.longitude }
     : null;
 
-  const destination = bar
-    ? { lat: bar.latitude, lng: bar.longitude }
-    : null;
+  // 쿼리용 출발지: 캐시가 있으면 캐시의 origin, 없으면 최초 위치에서 1회 세팅
+  const [routeOrigin, setRouteOrigin] = useState<{ lat: number; lng: number } | null>(
+    () => cachedDirections?.origin ?? null,
+  );
 
-  /** sessionStorage에서 캐싱된 경로 데이터 복원 */
-  const [cachedDirections, setCachedDirections] = useState<DirectionsResponse | null>(() => {
-    if (typeof window === 'undefined') return null;
-    const stored = sessionStorage.getItem(DIRECTIONS_CACHE_KEY);
-    if (stored) {
-      try { return JSON.parse(stored) as DirectionsResponse; } catch { /* */ }
+  // 캐시 없을 때: 최초 위치 잡히면 routeOrigin 초기화 (1회만)
+  useEffect(() => {
+    if (location && !routeOrigin) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- 최초 위치 도착 시 1회 초기화, 이후 routeOrigin이 세팅되면 조건 불일치로 재실행 없음
+      setRouteOrigin({ lat: location.latitude, lng: location.longitude });
     }
-    return null;
-  });
+  }, [location, routeOrigin]);
 
   const queryClient = useQueryClient();
-  const { data, isLoading, isFetching, error } = useDirections(origin, destination, mode, {
+  const { data, isLoading, isFetching, error } = useDirections(routeOrigin, destination, mode, {
     enabled: !cachedDirections,
   });
 
-  /** API 응답이 도착하면 sessionStorage에 캐싱 */
+  /** API 응답이 도착하면 sessionStorage에 메타데이터와 함께 캐싱한다 */
+  const routeOriginRef = useRef(routeOrigin);
+  useEffect(() => { routeOriginRef.current = routeOrigin; }, [routeOrigin]);
   useEffect(() => {
-    if (data) {
-      sessionStorage.setItem(DIRECTIONS_CACHE_KEY, JSON.stringify(data));
+    if (data && routeOriginRef.current && destination) {
+      const cache: DirectionsCache = {
+        origin: routeOriginRef.current,
+        destination,
+        mode,
+        data,
+      };
+      sessionStorage.setItem(getDirectionsCacheKey(mode), JSON.stringify(cache));
+      setCachedDirections(cache);
     }
-  }, [data]);
+  }, [data, destination, mode]);
 
-  /** 경로 캐시 무효화 후 재요청 */
+  /** 현재 위치로 경로 재탐색 (현재 mode 캐시만 무효화) */
   const handleRefresh = useCallback(() => {
-    sessionStorage.removeItem(DIRECTIONS_CACHE_KEY);
+    if (!location) {
+      toast.error('Unable to get your location. Please allow location access.');
+      return;
+    }
+    sessionStorage.removeItem(getDirectionsCacheKey(mode));
     setCachedDirections(null);
+    const newOrigin = { lat: location.latitude, lng: location.longitude };
+    setRouteOrigin(newOrigin);
     queryClient.invalidateQueries({
-      queryKey: queryKeys.maps.directions(origin, destination, mode),
+      queryKey: queryKeys.maps.directions(newOrigin, destination, mode),
     });
-  }, [queryClient, origin, destination, mode]);
+  }, [location, queryClient, destination, mode]);
+
+  /** 경로 초기화 — 모든 캐시 삭제 후 검색 페이지로 이동 */
+  const handleClearRoute = useCallback(() => {
+    clearAllDirectionsCache();
+    sessionStorage.removeItem('directions-bar');
+    router.push('/search');
+  }, [router]);
 
   /** API 응답 우선, 없으면 sessionStorage 캐시 사용 */
-  const effectiveData = data ?? cachedDirections;
+  const effectiveData = data ?? cachedDirections?.data ?? null;
 
   const routes = effectiveData?.routes ?? [];
   const routeResetKey = `${mode}-${routes.length}`;
@@ -118,10 +192,10 @@ export function DirectionsPageContent() {
   const mapChildren = (
     <>
       <BarMarker bar={bar} />
-      {origin && <UserLocationDot position={origin} />}
+      {preciseOrigin && <UserLocationDot position={preciseOrigin} />}
 
-      {origin && destination && (
-        <DirectionsFitBounds origin={origin} destination={destination} />
+      {routeOrigin && destination && (
+        <DirectionsFitBounds origin={routeOrigin} destination={destination} />
       )}
 
       {mode === TravelMode.TRANSIT &&
@@ -136,7 +210,13 @@ export function DirectionsPageContent() {
   /** 길안내 정보 패널 */
   const directionsPanel = (
     <div className="space-y-4 p-4">
-      <h3 className="font-semibold">Directions to {bar.name}</h3>
+      <div className="flex items-center justify-between">
+        <h3 className="font-semibold">Directions to {bar.name}</h3>
+        <Button variant="ghost" size="sm" onClick={handleClearRoute}>
+          <X className="mr-1 size-3" />
+          Clear Route
+        </Button>
+      </div>
       <div className="flex items-center gap-2">
         <TravelModeSelector mode={mode} onChange={setMode} />
         <Button variant="ghost" size="icon" onClick={handleRefresh} disabled={isFetching} aria-label="Refresh directions">
@@ -154,7 +234,7 @@ export function DirectionsPageContent() {
         route={route}
         isLoading={isLoading && !effectiveData}
         error={effectiveData ? null : error}
-        hasOrigin={!!origin || !!effectiveData}
+        hasOrigin={!!routeOrigin || !!effectiveData}
         mode={mode}
       />
     </div>
@@ -189,10 +269,16 @@ export function DirectionsPageContent() {
             </MapView>
           </div>
           <div className="space-y-4 p-4">
-            <div className="flex items-center gap-2">
-              <TravelModeSelector mode={mode} onChange={setMode} />
-              <Button variant="ghost" size="icon" onClick={handleRefresh} disabled={isFetching} aria-label="Refresh directions">
-                <RefreshCw className={cn('size-4', isFetching && 'animate-spin')} />
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <TravelModeSelector mode={mode} onChange={setMode} />
+                <Button variant="ghost" size="icon" onClick={handleRefresh} disabled={isFetching} aria-label="Refresh directions">
+                  <RefreshCw className={cn('size-4', isFetching && 'animate-spin')} />
+                </Button>
+              </div>
+              <Button variant="ghost" size="sm" onClick={handleClearRoute}>
+                <X className="mr-1 size-3" />
+                Clear Route
               </Button>
             </div>
             {mode === TravelMode.TRANSIT && (
@@ -206,7 +292,7 @@ export function DirectionsPageContent() {
               route={route}
               isLoading={isLoading && !effectiveData}
               error={effectiveData ? null : error}
-              hasOrigin={!!origin || !!effectiveData}
+              hasOrigin={!!routeOrigin || !!effectiveData}
               mode={mode}
             />
           </div>

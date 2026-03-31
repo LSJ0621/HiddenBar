@@ -1,11 +1,29 @@
 'use client';
 
-import { createContext, useContext, useState, useEffect, useCallback, useRef, type ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, useMemo, useRef, type ReactNode } from 'react';
 
 interface UserLocation {
   latitude: number;
   longitude: number;
+  accuracy: number | null;
+  speed: number | null;
+  heading: number | null;
+  timestamp: number;
 }
+
+/** 실시간 추적용 — 캐시 좌표 사용하지 않음 */
+const GEO_OPTIONS_WATCH: PositionOptions = {
+  enableHighAccuracy: true,
+  timeout: 10000,
+  maximumAge: 0,
+};
+
+/** 초기 위치 확보용 — 최대 3초 전 캐시 허용 */
+const GEO_OPTIONS_ONESHOT: PositionOptions = {
+  enableHighAccuracy: true,
+  timeout: 10000,
+  maximumAge: 3000,
+};
 
 interface LocationContextValue {
   location: UserLocation | null;
@@ -36,6 +54,10 @@ export function LocationProvider({ children }: { children: ReactNode }) {
     setLocation({
       latitude: position.coords.latitude,
       longitude: position.coords.longitude,
+      accuracy: position.coords.accuracy ?? null,
+      speed: position.coords.speed ?? null,
+      heading: position.coords.heading ?? null,
+      timestamp: position.timestamp,
     });
     setIsLoading(false);
     setIsPermissionDenied(false);
@@ -54,7 +76,7 @@ export function LocationProvider({ children }: { children: ReactNode }) {
     if (typeof window === 'undefined' || !('geolocation' in navigator)) return;
     setIsLoading(true);
     setError(null);
-    navigator.geolocation.getCurrentPosition(handleSuccess, handleError);
+    navigator.geolocation.getCurrentPosition(handleSuccess, handleError, GEO_OPTIONS_ONESHOT);
   }, [handleSuccess, handleError]);
 
   const enableWatch = useCallback(() => {
@@ -72,7 +94,7 @@ export function LocationProvider({ children }: { children: ReactNode }) {
     setIsLoading(true);
 
     if (watching) {
-      const id = navigator.geolocation.watchPosition(handleSuccess, handleError);
+      const id = navigator.geolocation.watchPosition(handleSuccess, handleError, GEO_OPTIONS_WATCH);
       watchIdRef.current = id;
       return () => {
         navigator.geolocation.clearWatch(id);
@@ -80,13 +102,22 @@ export function LocationProvider({ children }: { children: ReactNode }) {
       };
     }
 
-    navigator.geolocation.getCurrentPosition(handleSuccess, handleError);
+    let stale = false;
+    navigator.geolocation.getCurrentPosition(
+      (pos) => { if (!stale) handleSuccess(pos); },
+      (err) => { if (!stale) handleError(err); },
+      GEO_OPTIONS_ONESHOT,
+    );
+    return () => { stale = true; };
   }, [watching, handleSuccess, handleError]);
 
+  const value = useMemo(
+    () => ({ location, error, isLoading, isPermissionDenied, requestLocation, enableWatch }),
+    [location, error, isLoading, isPermissionDenied, requestLocation, enableWatch],
+  );
+
   return (
-    <LocationContext.Provider
-      value={{ location, error, isLoading, isPermissionDenied, requestLocation, enableWatch }}
-    >
+    <LocationContext.Provider value={value}>
       {children}
     </LocationContext.Provider>
   );

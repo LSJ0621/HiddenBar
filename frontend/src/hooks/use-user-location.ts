@@ -6,6 +6,10 @@ import { useLocationContext } from '@/providers/location-provider';
 interface UserLocation {
   latitude: number;
   longitude: number;
+  accuracy: number | null;
+  speed: number | null;
+  heading: number | null;
+  timestamp: number;
 }
 
 interface UseUserLocationReturn {
@@ -19,11 +23,25 @@ interface UseUserLocationReturn {
 const isGeolocationAvailable =
   typeof window !== 'undefined' && 'geolocation' in navigator;
 
+/** 실시간 추적용 — 캐시 좌표 사용하지 않음 */
+const GEO_OPTIONS_WATCH: PositionOptions = {
+  enableHighAccuracy: true,
+  timeout: 10000,
+  maximumAge: 0,
+};
+
+/** 초기 위치 확보용 — 최대 3초 전 캐시 허용 */
+const GEO_OPTIONS_ONESHOT: PositionOptions = {
+  enableHighAccuracy: true,
+  timeout: 10000,
+  maximumAge: 3000,
+};
+
 function fetchGeolocation(
   onSuccess: (pos: GeolocationPosition) => void,
   onError: (err: GeolocationPositionError) => void,
 ) {
-  navigator.geolocation.getCurrentPosition(onSuccess, onError);
+  navigator.geolocation.getCurrentPosition(onSuccess, onError, GEO_OPTIONS_ONESHOT);
 }
 
 interface UseUserLocationOptions {
@@ -51,6 +69,10 @@ export const useUserLocation = (
     setLocation({
       latitude: position.coords.latitude,
       longitude: position.coords.longitude,
+      accuracy: position.coords.accuracy ?? null,
+      speed: position.coords.speed ?? null,
+      heading: position.coords.heading ?? null,
+      timestamp: position.timestamp,
     });
     setIsLoading(false);
     setIsPermissionDenied(false);
@@ -92,6 +114,7 @@ export const useUserLocation = (
       const watchId = navigator.geolocation.watchPosition(
         handleSuccess,
         handleError,
+        GEO_OPTIONS_WATCH,
       );
       return () => {
         navigator.geolocation.clearWatch(watchId);

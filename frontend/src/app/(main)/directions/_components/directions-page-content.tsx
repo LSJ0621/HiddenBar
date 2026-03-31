@@ -192,7 +192,13 @@ export function DirectionsPageContent() {
   const mapChildren = (
     <>
       <BarMarker bar={bar} />
-      {preciseOrigin && <UserLocationDot position={preciseOrigin} />}
+      {preciseOrigin && (
+        <UserLocationDot
+          position={preciseOrigin}
+          speed={location?.speed}
+          accuracy={location?.accuracy}
+        />
+      )}
 
       {routeOrigin && destination && (
         <DirectionsFitBounds origin={routeOrigin} destination={destination} />

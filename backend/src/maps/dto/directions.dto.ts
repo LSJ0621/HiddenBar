@@ -29,5 +29,5 @@ export class DirectionsDto {
 
   @IsOptional()
   @IsEnum(TravelMode)
-  mode?: TravelMode = TravelMode.WALKING;
+  mode?: TravelMode = TravelMode.TRANSIT;
 }

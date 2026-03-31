@@ -12,7 +12,7 @@ import { TravelMode } from '@/types';
 export const useDirections = (
   origin: { lat: number; lng: number } | null,
   dest: { lat: number; lng: number } | null,
-  mode: TravelMode = TravelMode.WALKING,
+  mode: TravelMode = TravelMode.TRANSIT,
   options?: { enabled?: boolean },
 ) => {
   return useQuery<DirectionsResponse>({

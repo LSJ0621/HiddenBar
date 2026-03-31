@@ -1,7 +1,9 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import { useQueryStates, parseAsFloat, parseAsString, parseAsStringLiteral } from 'nuqs';
+import { AdvancedMarker } from '@vis.gl/react-google-maps';
+import { toast } from 'sonner';
 import { useSearchByAddress, useSearchByName } from '@/hooks/queries/use-search';
 import { useUserLocation } from '@/hooks/use-user-location';
 import { LocationProvider } from '@/providers/location-provider';
@@ -9,6 +11,10 @@ import { SearchBar } from '@/components/search/search-bar';
 import { SearchEmptyState } from '@/components/search/search-empty-state';
 import { BarCard, BarCardHorizontalSkeleton } from '@/components/bars/bar-card';
 import { Button } from '@/components/ui/button';
+import { MapView } from '@/components/map/map-view';
+import { BarMarker } from '@/components/map/bar-marker';
+import { UserLocationDot } from '@/components/map/user-location-dot';
+import { SearchFitBounds } from '@/components/map/search-fit-bounds';
 import { SKELETON_COUNT } from '@/lib/constants';
 import type { BarSummary } from '@/types';
 
@@ -80,6 +86,18 @@ function SearchPageContentInner() {
   const { location, isLoading: isLocationLoading, isPermissionDenied, requestLocation } = useUserLocation();
   const [locationBannerDismissed, setLocationBannerDismissed] = useState(false);
 
+  /** 지도 클릭 핀 (map 탭 전용) */
+  const [mapPin, setMapPin] = useState<{ lat: number; lng: number } | null>(null);
+  /** 지도에 표시할 바 목록 (검색 결과 0건 시 이전 결과 유지) */
+  const [displayedBars, setDisplayedBars] = useState<BarSummary[]>([]);
+  /** 결과 패널 ref (데스크탑 독립 스크롤용) */
+  const contentRef = useRef<HTMLDivElement>(null);
+
+  /** 지도 중심점 (유저 위치 기반) */
+  const mapCenter = location
+    ? { lat: location.latitude, lng: location.longitude }
+    : undefined;
+
   /** 명시적 주소 검색이 없으면 유저 위치를 기본 좌표로 사용 */
   const hasExplicitAddress = addressLat != null && addressLng != null;
   const effectiveLat = hasExplicitAddress ? addressLat : (location?.latitude ?? null);
@@ -147,24 +165,41 @@ function SearchPageContentInner() {
     });
   }, [setSearchState]);
 
+  /** 지도 핀 위치로 검색 실행 (map 탭 전용) */
+  const handleMapSearch = useCallback(() => {
+    if (!mapPin) return;
+    handleSearch({ lat: mapPin.lat, lng: mapPin.lng, addressDisplay: 'Map pin' });
+  }, [mapPin, handleSearch]);
+
   /** 결과 데이터 추출 */
-  let bars: BarSummary[] = [];
-  let isLoading = false;
-  let showEmpty = false;
-  /** 위치 로딩 중이면 결과가 아직 없더라도 "검색하세요" 메시지 대신 로딩 상태를 표시 */
   const hasResults = isNameMode || isAddressOnlyMode || isLocationLoading;
 
-  if (isNameMode) {
-    bars = nameQuery.data?.pages.flatMap((p) => p.items) ?? [];
-    isLoading = nameQuery.isLoading;
-    showEmpty = !isLoading && bars.length === 0;
-  } else if (isAddressOnlyMode) {
-    bars = addressQuery.data?.pages.flatMap((p) => p.items) ?? [];
-    isLoading = addressQuery.isLoading;
-    showEmpty = !isLoading && bars.length === 0;
-  } else if (isLocationLoading) {
-    isLoading = true;
-  }
+  const namePages = nameQuery.data?.pages;
+  const addressPages = addressQuery.data?.pages;
+
+  const bars = useMemo(() => {
+    if (isNameMode) return namePages?.flatMap((p) => p.items) ?? [];
+    if (isAddressOnlyMode) return addressPages?.flatMap((p) => p.items) ?? [];
+    return [];
+  }, [isNameMode, isAddressOnlyMode, namePages, addressPages]);
+
+  const isLoading = isNameMode
+    ? nameQuery.isLoading
+    : isAddressOnlyMode
+      ? addressQuery.isLoading
+      : isLocationLoading;
+
+  const showEmpty = !isLoading && hasResults && bars.length === 0;
+
+  /** 검색 결과가 있으면 지도 핀 갱신, 0건이면 이전 핀 유지 + toast */
+  useEffect(() => {
+    if (isLoading) return;
+    if (bars.length > 0) {
+      setDisplayedBars(bars);
+    } else if (hasResults && bars.length === 0) {
+      toast.info('No results found', { description: 'Showing previous results on map.' });
+    }
+  }, [bars, isLoading, hasResults]);
 
   /** 탭 변경 핸들러 — URL 상태와 동기화 */
   const handleTabChange = useCallback(
@@ -174,19 +209,27 @@ function SearchPageContentInner() {
     [setSearchState],
   );
 
-  /** 스크롤 위치 저장 (스크롤 시 debounce) */
+  /** 스크롤 위치 저장 (데스크탑: contentRef, 모바일: window) */
   useEffect(() => {
     let timer: ReturnType<typeof setTimeout>;
+    const getTarget = () => {
+      const el = contentRef.current;
+      return el && el.scrollHeight > el.clientHeight ? el : null;
+    };
     const handleScroll = () => {
       clearTimeout(timer);
       timer = setTimeout(() => {
-        sessionStorage.setItem(SCROLL_POSITION_KEY, String(window.scrollY));
+        const el = getTarget();
+        const y = el ? el.scrollTop : window.scrollY;
+        sessionStorage.setItem(SCROLL_POSITION_KEY, String(y));
       }, 100);
     };
-    window.addEventListener('scroll', handleScroll, { passive: true });
+    const el = getTarget();
+    const target: EventTarget = el ?? window;
+    target.addEventListener('scroll', handleScroll, { passive: true });
     return () => {
       clearTimeout(timer);
-      window.removeEventListener('scroll', handleScroll);
+      target.removeEventListener('scroll', handleScroll);
     };
   }, []);
 
@@ -196,7 +239,14 @@ function SearchPageContentInner() {
     const saved = sessionStorage.getItem(SCROLL_POSITION_KEY);
     if (saved) {
       const y = Number(saved);
-      requestAnimationFrame(() => window.scrollTo(0, y));
+      requestAnimationFrame(() => {
+        const el = contentRef.current;
+        if (el && el.scrollHeight > el.clientHeight) {
+          el.scrollTop = y;
+        } else {
+          window.scrollTo(0, y);
+        }
+      });
     }
   }, [isLoading]);
 
@@ -253,8 +303,67 @@ function SearchPageContentInner() {
   );
 
   return (
-      <div className="container mx-auto px-4 py-6 md:px-6 lg:px-8">
-        {/* SearchBar */}
+    <div className="flex flex-col md:flex-row md:h-[calc(100dvh-4rem)]">
+      {/* 지도 패널 */}
+      <div className="shrink-0 px-4 pt-4 md:sticky md:top-16 md:h-[calc(100dvh-4rem)] md:w-1/2 md:p-0 lg:w-[55%]">
+        <MapView
+          center={mapCenter}
+          className="h-[200px] overflow-hidden rounded-lg md:h-full md:rounded-none"
+          onMapClick={
+            tab === 'map'
+              ? (e) => {
+                  const latLng = e.detail.latLng;
+                  if (latLng) setMapPin({ lat: latLng.lat, lng: latLng.lng });
+                }
+              : undefined
+          }
+        >
+          {mapCenter && <UserLocationDot position={mapCenter} />}
+          {tab === 'map' && mapPin && (
+            <AdvancedMarker position={mapPin}>
+              <svg
+                width="22"
+                height="28"
+                viewBox="0 0 56 72"
+                fill="none"
+                aria-hidden="true"
+              >
+                <defs>
+                  <linearGradient id="search-pin-grad" x1="28" y1="0" x2="28" y2="60" gradientUnits="userSpaceOnUse">
+                    <stop stopColor="#2C2418" />
+                    <stop offset="1" stopColor="#1A1610" />
+                  </linearGradient>
+                </defs>
+                <path
+                  d="M28 0C12.536 0 0 12.536 0 28c0 21 28 44 28 44s28-23 28-44C56 12.536 43.464 0 28 0z"
+                  fill="url(#search-pin-grad)"
+                />
+                <path
+                  d="M20 17h16l-6 10h-4l-6-10z"
+                  fill="none"
+                  stroke="#E8A849"
+                  strokeWidth="1.8"
+                  strokeLinejoin="round"
+                />
+                <rect x="27" y="27" width="2" height="5" rx="0.8" fill="#E8A849" />
+                <rect x="24" y="32" width="8" height="1.5" rx="0.75" fill="#E8A849" />
+                <line x1="21" y1="20" x2="35" y2="20" stroke="#E8A849" strokeWidth="1" opacity="0.4" />
+              </svg>
+            </AdvancedMarker>
+          )}
+          {displayedBars.map((bar) => (
+            <BarMarker key={bar.id} bar={bar} />
+          ))}
+          {displayedBars.length > 0 && (
+            <SearchFitBounds
+              points={displayedBars.map((b) => ({ lat: b.latitude, lng: b.longitude }))}
+            />
+          )}
+        </MapView>
+      </div>
+
+      {/* 검색 + 결과 패널 */}
+      <div ref={contentRef} className="flex-1 px-4 py-4 md:overflow-y-auto md:px-6 lg:px-8 scrollbar-hide">
         <div className="mb-6">
           <SearchBar
             onSearch={handleSearch}
@@ -264,56 +373,53 @@ function SearchPageContentInner() {
             defaultAddressLng={addressLng ?? undefined}
             tab={tab}
             onTabChange={handleTabChange}
-            hasSearchResults={hasResults && bars.length > 0}
-            searchResultBars={bars}
+            mapPin={mapPin}
+            onMapSearch={handleMapSearch}
           />
         </div>
         {locationBanner}
 
-        {/* Main content */}
-        <div>
-          <div className="min-w-0 flex-1">
-            {/* Results Header */}
-            {hasResults && bars.length > 0 && (
-              <p className="mb-4 text-sm text-muted-foreground" aria-live="polite">
-                {isDefaultNearby ? 'Nearby bars' : `${bars.length} result${bars.length !== 1 ? 's' : ''}`}
-              </p>
-            )}
+        {/* 결과 */}
+        <div className="min-w-0 flex-1">
+          {hasResults && bars.length > 0 && (
+            <p className="mb-4 text-sm text-muted-foreground" aria-live="polite">
+              {isDefaultNearby ? 'Nearby bars' : `${bars.length} result${bars.length !== 1 ? 's' : ''}`}
+            </p>
+          )}
 
-            {/* Results */}
-            {!hasResults && !isLocationLoading ? (
-              <p className="py-12 text-center text-muted-foreground">
-                {isPermissionDenied
-                  ? 'Allow location access or search by address to find bars.'
-                  : 'Search by address, bar name, or both to find bars.'}
-              </p>
-            ) : showEmpty ? (
-              <SearchEmptyState query={name ?? addressDisplay ?? undefined} onResetFilters={handleResetFilters} />
-            ) : isLoading ? (
+          {!hasResults && !isLocationLoading ? (
+            <p className="py-12 text-center text-muted-foreground">
+              {isPermissionDenied
+                ? 'Allow location access or search by address to find bars.'
+                : 'Search by address, bar name, or both to find bars.'}
+            </p>
+          ) : showEmpty ? (
+            <SearchEmptyState query={name ?? addressDisplay ?? undefined} onResetFilters={handleResetFilters} />
+          ) : isLoading ? (
+            <div className="space-y-3">
+              {Array.from({ length: SKELETON_COUNT }, (_, i) => (
+                <BarCardHorizontalSkeleton key={i} />
+              ))}
+            </div>
+          ) : (
+            <>
               <div className="space-y-3">
-                {Array.from({ length: SKELETON_COUNT }, (_, i) => (
-                  <BarCardHorizontalSkeleton key={i} />
+                {bars.map((bar, index) => (
+                  <BarCard
+                    key={bar.id}
+                    bar={bar}
+                    variant="horizontal"
+                    distanceKm={bar.distanceKm}
+                    similarityScore={bar.similarityScore}
+                    priority={index === 0}
+                  />
                 ))}
               </div>
-            ) : (
-              <>
-                <div className="space-y-3">
-                  {bars.map((bar, index) => (
-                    <BarCard
-                      key={bar.id}
-                      bar={bar}
-                      variant="horizontal"
-                      distanceKm={bar.distanceKm}
-                      similarityScore={bar.similarityScore}
-                      priority={index === 0}
-                    />
-                  ))}
-                </div>
-                {loadMoreButton}
-              </>
-            )}
-          </div>
+              {loadMoreButton}
+            </>
+          )}
         </div>
       </div>
-    );
+    </div>
+  );
 }

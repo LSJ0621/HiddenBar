@@ -3,7 +3,6 @@
 import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { Search, MapPin, MapPinned, ListFilter, Check, X } from 'lucide-react';
-import { AdvancedMarker, Pin } from '@vis.gl/react-google-maps';
 
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -14,11 +13,6 @@ import { API_ENDPOINTS } from '@/lib/api-endpoints';
 import type { AddressSearchResult } from '@/hooks/use-address-search';
 import { useBarNameSuggestions } from '@/hooks/queries/use-search';
 import { useDebouncedCallback } from '@/hooks/use-debounced-callback';
-import { MapView } from '@/components/map/map-view';
-import { BarMarker } from '@/components/map/bar-marker';
-import { UserLocationDot } from '@/components/map/user-location-dot';
-import { SearchFitBounds } from '@/components/map/search-fit-bounds';
-import { useUserLocation } from '@/hooks/use-user-location';
 import type { BarSummary } from '@/types';
 
 interface SearchBarProps {
@@ -35,10 +29,10 @@ interface SearchBarProps {
   tab?: string;
   onTabChange?: (tab: string) => void;
   autoFocus?: boolean;
-  /** 검색 결과가 있을 때 Map Pin 탭의 지도를 축소 */
-  hasSearchResults?: boolean;
-  /** 맵핀 탭 지도에 표시할 검색 결과 바 목록 */
-  searchResultBars?: BarSummary[];
+  /** 지도에서 클릭한 핀 좌표 (map 탭 전용) */
+  mapPin?: { lat: number; lng: number } | null;
+  /** 지도 핀 위치로 검색 실행 (map 탭 전용) */
+  onMapSearch?: () => void;
 }
 
 type AddressFieldState = 'idle' | 'results' | 'selected';
@@ -488,8 +482,8 @@ export function SearchBar({
   tab = 'address',
   onTabChange,
   autoFocus,
-  hasSearchResults = false,
-  searchResultBars = [],
+  mapPin,
+  onMapSearch,
 }: SearchBarProps) {
   const router = useRouter();
   const containerRef = useRef<HTMLDivElement>(null);
@@ -509,13 +503,6 @@ export function SearchBar({
     lng: defaultAddressLng,
   });
   const bothNameField = useNameField(defaultName);
-
-  // map 탭 전용 상태
-  const [mapPin, setMapPin] = useState<{ lat: number; lng: number } | null>(null);
-  const { location: userLocation } = useUserLocation();
-  const mapCenter = userLocation
-    ? { lat: userLocation.latitude, lng: userLocation.longitude }
-    : undefined;
 
   // 외부 클릭 시 드롭다운 닫기
   useEffect(() => {
@@ -586,15 +573,6 @@ export function SearchBar({
     },
     [bothAddressField.selected, bothNameField.value, onSearch],
   );
-
-  const handleMapSearch = useCallback(() => {
-    if (!mapPin) return;
-    onSearch({
-      lat: mapPin.lat,
-      lng: mapPin.lng,
-      addressDisplay: 'Map pin',
-    });
-  }, [mapPin, onSearch]);
 
   return (
     <div ref={containerRef}>
@@ -687,58 +665,19 @@ export function SearchBar({
           </div>
         </TabsContent>
 
-        {/* 탭 4: 지도 핀 — forceMount로 탭 전환 시 지도 재생성 방지 */}
-        <TabsContent value="map" className="pt-3 data-[state=inactive]:hidden" forceMount>
-          <div className="space-y-3">
-            <div className="flex items-center gap-3">
-              <p className="flex-1 text-sm text-muted-foreground">
-                Tap on the map to select where you want to search
-              </p>
-              <Button
-                onClick={handleMapSearch}
-                disabled={!mapPin}
-                className="ml-auto"
-              >
-                Search here
-              </Button>
-            </div>
-            <MapView
-              center={mapCenter}
-              className={cn(
-                'rounded-lg',
-                hasSearchResults && searchResultBars.length > 0
-                  ? 'h-[180px]'
-                  : 'h-[130px]',
-              )}
-              onMapClick={(e) => {
-                const latLng = e.detail.latLng;
-                if (latLng) {
-                  setMapPin({ lat: latLng.lat, lng: latLng.lng });
-                }
-              }}
+        {/* 탭 4: 지도 핀 */}
+        <TabsContent value="map" className="pt-3">
+          <div className="flex items-center gap-3">
+            <p className="flex-1 text-sm text-muted-foreground">
+              Tap on the map to select where you want to search
+            </p>
+            <Button
+              onClick={onMapSearch}
+              disabled={!mapPin}
+              className="ml-auto"
             >
-              {/* 유저 현재 위치 (파란 점) */}
-              {mapCenter && <UserLocationDot position={mapCenter} />}
-              {/* 유저가 클릭한 핀 */}
-              {mapPin && (
-                <AdvancedMarker position={mapPin}>
-                  <Pin />
-                </AdvancedMarker>
-              )}
-              {/* 검색 결과 바 마커 */}
-              {searchResultBars.map((bar) => (
-                <BarMarker key={bar.id} bar={bar} />
-              ))}
-              {/* 검색 결과가 있으면 bounds 자동 조정 */}
-              {searchResultBars.length > 0 && (
-                <SearchFitBounds
-                  points={searchResultBars.map((b) => ({
-                    lat: b.latitude,
-                    lng: b.longitude,
-                  }))}
-                />
-              )}
-            </MapView>
+              Search here
+            </Button>
           </div>
         </TabsContent>
       </Tabs>

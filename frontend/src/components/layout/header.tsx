@@ -3,9 +3,8 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Search, User, LogOut, Bookmark, Store, PlusCircle, Shield, ChevronDown } from 'lucide-react';
+import { User, LogOut, Bookmark, Store, PlusCircle, Shield, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   DropdownMenu,
@@ -19,9 +18,6 @@ import { isLoggedIn } from '@/lib/token';
 import { cn } from '@/lib/utils';
 import { Role } from '@/types';
 
-/** Pages where the header mini search bar should be hidden */
-const HIDE_SEARCH_PAGES = ['/', '/search', '/directions'];
-
 /** Main site header with navigation and auth controls */
 export function Header() {
   const pathname = usePathname();
@@ -33,15 +29,9 @@ export function Header() {
     setLoggedIn(isLoggedIn());
   }, [user]);
 
-  const showMiniSearch = !HIDE_SEARCH_PAGES.includes(pathname);
-
   const handleLogout = async () => {
     await logout();
     router.push('/');
-  };
-
-  const handleSearchFocus = () => {
-    router.push('/search');
   };
 
   return (
@@ -77,37 +67,8 @@ export function Header() {
           ))}
         </nav>
 
-        {/* Mini Search Bar — hidden on home & search pages */}
-        {showMiniSearch && (
-          <div className="hidden max-w-xs flex-1 md:block">
-            <div className="relative">
-              <Search className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                type="search"
-                placeholder="Search..."
-                className="h-9 pl-9"
-                onFocus={handleSearchFocus}
-                readOnly
-              />
-            </div>
-          </div>
-        )}
-
         {/* Right-side actions */}
         <div className="ml-auto flex items-center gap-2">
-          {/* Mobile search button — hidden on home & search */}
-          {showMiniSearch && (
-            <Button
-              variant="ghost"
-              size="icon"
-              className="md:hidden"
-              onClick={() => router.push('/search')}
-              aria-label="Search"
-            >
-              <Search className="size-5" />
-            </Button>
-          )}
-
           {loggedIn ? (
             <>
               {/* Mobile: simple link to profile (bottom tab bar handles navigation) */}

@@ -5,8 +5,6 @@ const FOOTER_LINKS = [
   { href: '/search', label: 'Search Bars' },
   { href: '/directions', label: 'Directions' },
   { href: '/bars/new', label: 'Register Bar' },
-  { href: '/terms', label: 'Terms of Service' },
-  { href: '/privacy', label: 'Privacy Policy' },
 ] as const;
 
 /** Site footer with compact single-row layout */

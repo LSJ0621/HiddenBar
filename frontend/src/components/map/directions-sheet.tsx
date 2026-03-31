@@ -33,7 +33,7 @@ interface DirectionsSheetProps {
 /** 바 상세 비교용 길안내 Sheet + /directions 진입점 */
 export function DirectionsSheet({ bar, open, onOpenChange }: DirectionsSheetProps) {
   const router = useRouter();
-  const [mode, setMode] = useState<TravelMode>(TravelMode.WALKING);
+  const [mode, setMode] = useState<TravelMode>(TravelMode.TRANSIT);
   const [routeSelection, setRouteSelection] = useState<{ key: string; index: number }>({
     key: '',
     index: 0,

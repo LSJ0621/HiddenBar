@@ -36,7 +36,7 @@ export class SeedInitService implements OnApplicationBootstrap {
   ) {}
 
   async onApplicationBootstrap() {
-    if (process.env.NODE_ENV === 'production') {
+    if (process.env.NODE_ENV === 'production' && process.env.SEED_ENABLED !== 'true') {
       return;
     }
 

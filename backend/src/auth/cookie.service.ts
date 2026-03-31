@@ -25,10 +25,13 @@ export class CookieService {
     const accessMaxAge =
       ms(accessExpiration as ms.StringValue) || 15 * 60 * 1000;
 
+    const domain = this.configService.get<string>('cookie.domain') || undefined;
+
     res.cookie('accessToken', tokens.accessToken, {
       httpOnly: true,
       secure,
       sameSite,
+      domain,
       path: '/',
       maxAge: accessMaxAge,
     });
@@ -37,6 +40,7 @@ export class CookieService {
       httpOnly: true,
       secure,
       sameSite,
+      domain,
       path: '/api/v1/auth',
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7일
     });
@@ -45,6 +49,7 @@ export class CookieService {
       httpOnly: false,
       secure,
       sameSite,
+      domain,
       path: '/',
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7일
     });
@@ -60,10 +65,13 @@ export class CookieService {
       'lax',
     );
 
+    const domain = this.configService.get<string>('cookie.domain') || undefined;
+
     res.cookie('accessToken', '', {
       httpOnly: true,
       secure,
       sameSite,
+      domain,
       path: '/',
       maxAge: 0,
     });
@@ -72,6 +80,7 @@ export class CookieService {
       httpOnly: true,
       secure,
       sameSite,
+      domain,
       path: '/api/v1/auth',
       maxAge: 0,
     });
@@ -80,6 +89,7 @@ export class CookieService {
       httpOnly: false,
       secure,
       sameSite,
+      domain,
       path: '/',
       maxAge: 0,
     });

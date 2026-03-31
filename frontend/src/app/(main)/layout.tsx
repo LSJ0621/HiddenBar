@@ -16,9 +16,9 @@ export default function MainLayout({
 }>) {
   return (
     <NuqsAdapter>
-      <div className="flex min-h-screen flex-col">
+      <div className="flex min-h-[100dvh] flex-col">
         <Header />
-        <main className="flex-1 pb-16 lg:pb-0">{children}</main>
+        <main className="flex-1 pb-[calc(4rem+env(safe-area-inset-bottom,0px))] lg:pb-0">{children}</main>
         <Footer />
         <BottomTabBar />
       </div>

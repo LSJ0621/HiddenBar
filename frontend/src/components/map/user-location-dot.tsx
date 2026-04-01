@@ -104,15 +104,23 @@ export function UserLocationDot({
     rafRef.current = requestAnimationFrame(animate);
   }, []);
 
-  /** position prop이 바뀌면 새 목표 설정 → 애니메이션 시작 */
+  /** position prop이 바뀌면 새 목표 설정 → 애니메이션 시작 (노이즈 필터링 포함) */
   useEffect(() => {
+    // 정확도가 25m보다 나쁘면 신뢰할 수 없으므로 무시
+    if (accuracy && accuracy > 25) return;
+
+    // 이동 거리가 오차 범위 안이면 GPS 노이즈로 판단하고 무시
+    const dist = distanceMeters(currentRef.current, position);
+    const deadband = Math.max((accuracy ?? 15) * 0.3, 3);
+    if (dist < deadband) return;
+
     targetRef.current = position;
     lastFrameRef.current = performance.now();
 
     if (!rafRef.current) {
       rafRef.current = requestAnimationFrame(animate);
     }
-  }, [position.lat, position.lng, animate]);
+  }, [position.lat, position.lng, accuracy, animate]);
 
   /** speed가 바뀌면 tau 재계산 */
   useEffect(() => {

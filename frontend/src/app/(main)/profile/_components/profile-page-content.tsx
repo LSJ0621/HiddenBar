@@ -10,6 +10,7 @@ import {
   LogOut,
   Search,
   Shield,
+  BookOpen,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -106,6 +107,13 @@ export function ProfilePageContent() {
             >
               <Plus className="size-4 text-muted-foreground" />
               Register Bar
+            </Link>
+            <Link
+              href="/profile/guide"
+              className="flex items-center gap-2.5 rounded-md px-3 py-2.5 text-sm font-medium transition-colors duration-150 hover:bg-accent"
+            >
+              <BookOpen className="size-4 text-muted-foreground" />
+              User Guide
             </Link>
 
             {user.role === Role.ADMIN && (

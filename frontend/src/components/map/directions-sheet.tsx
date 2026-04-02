@@ -72,7 +72,18 @@ export function DirectionsSheet({ bar, open, onOpenChange }: DirectionsSheetProp
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="bottom" className="h-[80dvh] overflow-y-auto scrollbar-hide" aria-describedby={undefined}>
+      <SheetContent
+        side="bottom"
+        className="h-[80dvh] overflow-y-auto scrollbar-hide"
+        aria-describedby={undefined}
+        onInteractOutside={(e) => {
+          // 온보딩 요소(tooltip/overlay) 클릭 시 Sheet 닫힘 방지
+          const target = e.target instanceof HTMLElement ? e.target : null;
+          if (target?.closest('[data-onboarding]')) {
+            e.preventDefault();
+          }
+        }}
+      >
         <SheetHeader>
           <SheetTitle>Directions to {bar.name}</SheetTitle>
         </SheetHeader>
@@ -96,7 +107,7 @@ export function DirectionsSheet({ bar, open, onOpenChange }: DirectionsSheetProp
           {/* 이동 수단 선택 + CTA */}
           <div className="flex items-center justify-between">
             <TravelModeSelector mode={mode} onChange={setMode} />
-            <Button size="sm" onClick={handleGetDirections}>
+            <Button id="get-directions-button" size="sm" onClick={handleGetDirections}>
               <Navigation className="mr-2 size-4" />
               Get Directions
             </Button>

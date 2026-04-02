@@ -62,7 +62,7 @@ export function MapView({
   }
 
   return (
-    <div data-testid="map-view" className={cn('overflow-hidden rounded-lg', className)}>
+    <div data-testid="map-view" className={cn('relative z-0 overflow-hidden rounded-lg', className)}>
       <Map
         className="size-full min-h-[inherit]"
         defaultCenter={center}

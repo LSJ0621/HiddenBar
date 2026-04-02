@@ -14,7 +14,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useAuthStore } from '@/hooks/use-auth';
-import { isLoggedIn } from '@/lib/token';
+import { isLoggedIn, getCachedUser, type CachedUser } from '@/lib/token';
 import { cn } from '@/lib/utils';
 import { Role } from '@/types';
 
@@ -24,10 +24,17 @@ export function Header() {
   const router = useRouter();
   const { user, logout } = useAuthStore();
   const [loggedIn, setLoggedIn] = useState(false);
+  const [cachedUser, setCachedUser] = useState<CachedUser | null>(null);
 
   useEffect(() => {
     setLoggedIn(isLoggedIn());
+    if (!user) {
+      setCachedUser(getCachedUser());
+    }
   }, [user]);
+
+  /** 헤더 표시용 유저 정보 — Redux 우선, 없으면 캐시 폴백 */
+  const displayUser = user ?? cachedUser;
 
   const handleLogout = async () => {
     await logout();
@@ -78,14 +85,14 @@ export function Header() {
                 onClick={() => router.push('/profile')}
               >
                 <Avatar size="sm">
-                  {user?.profileImage && (
-                    <AvatarImage src={user.profileImage} alt={user.name} />
+                  {displayUser?.profileImage && (
+                    <AvatarImage src={displayUser.profileImage} alt={displayUser.name} />
                   )}
                   <AvatarFallback>
-                    {user?.name?.charAt(0).toUpperCase() ?? '·'}
+                    {displayUser?.name?.charAt(0).toUpperCase() ?? '·'}
                   </AvatarFallback>
                 </Avatar>
-                <span className="max-w-[80px] truncate text-sm font-medium">{user?.name}</span>
+                <span className="max-w-[80px] truncate text-sm font-medium">{displayUser?.name}</span>
               </Button>
 
               {/* Desktop: avatar dropdown */}
@@ -93,20 +100,20 @@ export function Header() {
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="hidden items-center gap-2 rounded-full px-2 md:flex" data-testid="header-avatar-trigger">
                     <Avatar size="sm">
-                      {user?.profileImage && (
-                        <AvatarImage src={user.profileImage} alt={user.name} />
+                      {displayUser?.profileImage && (
+                        <AvatarImage src={displayUser.profileImage} alt={displayUser.name} />
                       )}
                       <AvatarFallback>
-                        {user?.name?.charAt(0).toUpperCase() ?? '·'}
+                        {displayUser?.name?.charAt(0).toUpperCase() ?? '·'}
                       </AvatarFallback>
                     </Avatar>
-                    <span className="max-w-[120px] truncate text-sm font-medium" data-testid="header-user-name">{user?.name}</span>
+                    <span className="max-w-[120px] truncate text-sm font-medium" data-testid="header-user-name">{displayUser?.name}</span>
                     <ChevronDown className="size-3.5 text-muted-foreground" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-48">
                   <div className="px-2 py-1.5">
-                    <p className="text-sm font-medium">{user?.name}</p>
+                    <p className="text-sm font-medium">{displayUser?.name}</p>
                     <p className="text-xs text-muted-foreground">
                       {user?.email}
                     </p>
@@ -137,7 +144,7 @@ export function Header() {
                       Register Bar
                     </Link>
                   </DropdownMenuItem>
-                  {user?.role === Role.ADMIN && (
+                  {displayUser?.role === Role.ADMIN && (
                     <>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem asChild>

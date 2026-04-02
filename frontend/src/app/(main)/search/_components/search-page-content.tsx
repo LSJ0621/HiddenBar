@@ -2,6 +2,8 @@
 
 import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import { useQueryStates, parseAsFloat, parseAsString, parseAsStringLiteral } from 'nuqs';
+import { useOnboarding } from '@/components/onboarding/use-onboarding';
+import { ONBOARDING_STEPS } from '@/components/onboarding/onboarding-steps';
 import { AdvancedMarker, InfoWindow } from '@vis.gl/react-google-maps';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -61,6 +63,7 @@ export function SearchPageContent() {
 }
 
 function SearchPageContentInner() {
+  const { state: onboardingState, notifyEvent, goToStep } = useOnboarding();
   const [searchState, setSearchState] = useQueryStates({
     name: parseAsString,
     addressLat: parseAsFloat,
@@ -207,12 +210,54 @@ function SearchPageContentInner() {
     }
   }, [bars, isLoading, hasResults]);
 
-  /** 탭 변경 핸들러 — URL 상태와 동기화 */
+  /** 온보딩 Step 0~3: forceTab으로 탭 강제 전환 */
+  const isOnboardingTabStep =
+    onboardingState.phase === 'active' &&
+    onboardingState.currentStep <= 3;
+
+  useEffect(() => {
+    if (!isOnboardingTabStep) return;
+    const stepDef = ONBOARDING_STEPS[onboardingState.currentStep];
+    if (stepDef?.forceTab && stepDef.forceTab !== tab) {
+      setSearchState({ tab: stepDef.forceTab as typeof tab });
+    }
+  }, [isOnboardingTabStep, onboardingState.currentStep, tab, setSearchState]);
+
+  /** 온보딩 Step 4: mapPin 변경 감지 → notifyEvent */
+  const prevMapPinRef = useRef(mapPin);
+  useEffect(() => {
+    if (
+      onboardingState.phase === 'active' &&
+      onboardingState.currentStep === 4 &&
+      mapPin &&
+      !prevMapPinRef.current
+    ) {
+      notifyEvent({ type: 'mapPin' });
+    }
+    prevMapPinRef.current = mapPin;
+  }, [mapPin, onboardingState.phase, onboardingState.currentStep, notifyEvent]);
+
+  /** 온보딩 Step 6: 검색 결과 0건 시 Step 4(맵 핀)로 되돌림 */
+  useEffect(() => {
+    if (
+      onboardingState.phase === 'active' &&
+      onboardingState.currentStep === 6 &&
+      !isLoading &&
+      hasResults &&
+      bars.length === 0
+    ) {
+      toast.info('No results found. Try searching a different area.');
+      goToStep(4);
+    }
+  }, [onboardingState.phase, onboardingState.currentStep, isLoading, hasResults, bars.length, goToStep]);
+
+  /** 탭 변경 핸들러 — URL 상태와 동기화 (온보딩 중 탭 전환 차단) */
   const handleTabChange = useCallback(
     (value: string) => {
+      if (isOnboardingTabStep) return;
       setSearchState({ tab: value as typeof tab });
     },
-    [setSearchState],
+    [setSearchState, isOnboardingTabStep],
   );
 
   /** 스크롤 위치 저장 (데스크탑: contentRef, 모바일: window) */
@@ -311,7 +356,7 @@ function SearchPageContentInner() {
   return (
     <div className="flex flex-col md:flex-row md:h-[calc(100dvh-4rem)]">
       {/* 지도 패널 */}
-      <div className="shrink-0 px-4 pt-4 md:sticky md:top-16 md:h-[calc(100dvh-4rem)] md:w-1/2 md:p-0 lg:w-[55%]">
+      <div className="shrink-0 px-4 pt-4 md:sticky md:top-16 md:z-0 md:h-[calc(100dvh-4rem)] md:w-1/2 md:p-0 lg:w-[55%]">
         <MapView
           center={mapCenter}
           className="h-[200px] overflow-hidden rounded-lg md:h-full md:rounded-none"

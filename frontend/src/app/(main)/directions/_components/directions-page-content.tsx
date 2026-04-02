@@ -193,11 +193,13 @@ export function DirectionsPageContent() {
     <>
       <BarMarker bar={bar} />
       {preciseOrigin && (
-        <UserLocationDot
-          position={preciseOrigin}
-          speed={location?.speed}
-          accuracy={location?.accuracy}
-        />
+        <div id="user-location-dot">
+          <UserLocationDot
+            position={preciseOrigin}
+            speed={location?.speed}
+            accuracy={location?.accuracy}
+          />
+        </div>
       )}
 
       {routeOrigin && destination && (
@@ -218,7 +220,7 @@ export function DirectionsPageContent() {
     <div className="space-y-4 p-4">
       <div className="flex items-center justify-between">
         <h3 className="font-semibold">Directions to {bar.name}</h3>
-        <Button variant="ghost" size="sm" onClick={handleClearRoute}>
+        <Button data-onboarding-target="clear-route" variant="ghost" size="sm" onClick={handleClearRoute}>
           <X className="mr-1 size-3" />
           Clear Route
         </Button>
@@ -282,7 +284,7 @@ export function DirectionsPageContent() {
                   <RefreshCw className={cn('size-4', isFetching && 'animate-spin')} />
                 </Button>
               </div>
-              <Button variant="ghost" size="sm" onClick={handleClearRoute}>
+              <Button data-onboarding-target="clear-route" variant="ghost" size="sm" onClick={handleClearRoute}>
                 <X className="mr-1 size-3" />
                 Clear Route
               </Button>

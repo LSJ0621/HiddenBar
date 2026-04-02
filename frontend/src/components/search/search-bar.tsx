@@ -578,19 +578,19 @@ export function SearchBar({
     <div ref={containerRef}>
       <Tabs value={tab} onValueChange={onTabChange} className="w-full">
         <TabsList className="w-full">
-          <TabsTrigger value="address" className="flex-1 gap-1">
+          <TabsTrigger value="address" data-tab="address" className="flex-1 gap-1">
             <MapPin className="size-4" />
             <span className="hidden sm:inline">Address</span>
           </TabsTrigger>
-          <TabsTrigger value="name" className="flex-1 gap-1">
+          <TabsTrigger value="name" data-tab="name" className="flex-1 gap-1">
             <Search className="size-4" />
             <span className="hidden sm:inline">Name</span>
           </TabsTrigger>
-          <TabsTrigger value="both" className="flex-1 gap-1">
+          <TabsTrigger value="both" data-tab="both" className="flex-1 gap-1">
             <ListFilter className="size-4" />
             <span className="hidden sm:inline">Both</span>
           </TabsTrigger>
-          <TabsTrigger value="map" className="flex-1 gap-1">
+          <TabsTrigger value="map" data-tab="map" className="flex-1 gap-1">
             <MapPinned className="size-4" />
             <span className="hidden sm:inline">Map Pin</span>
           </TabsTrigger>
@@ -672,6 +672,7 @@ export function SearchBar({
               Tap on the map to select where you want to search
             </p>
             <Button
+              id="search-here-button"
               onClick={onMapSearch}
               disabled={!mapPin}
               className="ml-auto"

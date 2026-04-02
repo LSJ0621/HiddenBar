@@ -3,6 +3,7 @@ import { NuqsAdapter } from 'nuqs/adapters/next/app';
 import { Header } from '@/components/layout/header';
 import { Footer } from '@/components/layout/footer';
 import { BottomTabBar } from '@/components/layout/bottom-tab-bar';
+import { OnboardingProvider } from '@/components/onboarding';
 
 export const metadata: Metadata = {
   title: 'Hidden Bar — Discover Hidden Bars Around the World',
@@ -16,12 +17,14 @@ export default function MainLayout({
 }>) {
   return (
     <NuqsAdapter>
-      <div className="flex min-h-[100dvh] flex-col">
-        <Header />
-        <main className="flex-1 pb-[calc(4rem+env(safe-area-inset-bottom,0px))] lg:pb-0">{children}</main>
-        <Footer />
-        <BottomTabBar />
-      </div>
+      <OnboardingProvider>
+        <div className="flex min-h-[100dvh] flex-col">
+          <Header />
+          <main className="flex-1 pb-[calc(4rem+env(safe-area-inset-bottom,0px))] lg:pb-0">{children}</main>
+          <Footer />
+          <BottomTabBar />
+        </div>
+      </OnboardingProvider>
     </NuqsAdapter>
   );
 }

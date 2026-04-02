@@ -1,10 +1,11 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { MapPin, Phone, Globe, Navigation } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { DirectionsSheet } from '@/components/map/directions-sheet';
+import { useOnboarding } from '@/components/onboarding/use-onboarding';
 
 import { Card, CardContent } from '@/components/ui/card';
 import { MapView } from '@/components/map/map-view';
@@ -33,6 +34,22 @@ export const BarDetailSidebar = React.memo(function BarDetailSidebar({
   bar,
 }: BarDetailSidebarProps) {
   const [directionsOpen, setDirectionsOpen] = useState(false);
+  const { state: onboardingState } = useOnboarding();
+  const directionsButtonRef = useRef<HTMLButtonElement>(null);
+
+  /** 온보딩 Step 7: Directions 버튼이 보이도록 스크롤 */
+  useEffect(() => {
+    if (
+      onboardingState.phase === 'active' &&
+      onboardingState.currentStep === 7 &&
+      directionsButtonRef.current
+    ) {
+      directionsButtonRef.current.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center',
+      });
+    }
+  }, [onboardingState.phase, onboardingState.currentStep]);
 
   const handleCopyAddress = () => {
     const fullAddress = `${bar.address}, ${bar.city}, ${bar.country}`;
@@ -64,6 +81,8 @@ export const BarDetailSidebar = React.memo(function BarDetailSidebar({
           </div>
           <div className="p-4">
             <Button
+              ref={directionsButtonRef}
+              id="directions-button"
               variant="outline"
               className="w-full"
               onClick={() => setDirectionsOpen(true)}

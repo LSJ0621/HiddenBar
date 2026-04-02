@@ -269,4 +269,9 @@
   .dark ::selection {
     background-color: oklch(0.75 0.15 65 / 30%);
   }
+
+  /* 온보딩 하이라이트: target을 overlay 패널(z-9998) 위로 올림 */
+  .onboarding-highlight {
+    z-index: 9999 !important;
+  }
 }

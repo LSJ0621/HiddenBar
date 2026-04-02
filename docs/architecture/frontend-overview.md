@@ -72,12 +72,79 @@
 - 검색 화면에서는 현재 위치 기반 주변 추천과 명시적 위치 검색을 함께 다룬다.
 - `category` 관련 레거시 타입/컴포넌트가 일부 남아 있을 수 있으나, SoT 기준 활성 개념은 아니다.
 
-## 5. 후속 코드 정합화가 필요한 항목
+## 5. 온보딩 가이드 시스템
+
+### 5.1 개요
+
+첫 가입 유저를 위한 인터랙티브 온보딩 가이드. 검색(4가지 탭) → 바 상세(Directions) → 길안내(실시간 위치/재탐색/클리어) 흐름을 코치마크 방식으로 안내한다. 외부 라이브러리 없이 직접 구현하며, "Modern Speakeasy" 디자인 톤(amber/charcoal/cream)에 맞춘다.
+
+### 5.2 컴포넌트 구조
+
+| 파일 | 역할 |
+|------|------|
+| `components/onboarding/onboarding-steps.ts` | 13개 스텝 정의 (target, message, placement, waitFor) |
+| `components/onboarding/onboarding-provider.tsx` | React Context + 상태 머신 + storage 관리 + 오버레이/툴팁/다이얼로그 렌더링 |
+| `components/onboarding/use-onboarding.ts` | Context 소비 훅 (`useOnboarding`) |
+| `components/onboarding/onboarding-overlay.tsx` | 풀스크린 오버레이 + CSS clip-path cutout |
+| `components/onboarding/onboarding-tooltip.tsx` | 위치 계산 + 메시지/버튼 tooltip |
+| `components/onboarding/onboarding-dialog.tsx` | Welcome + Completion 다이얼로그 (shadcn Dialog 재사용) |
+| `components/onboarding/index.ts` | Barrel export |
+
+### 5.3 상태 머신
+
+```
+상태: idle | welcome | active | complete
+
+idle → welcome    : 인증된 유저 + /search 첫 진입 + localStorage 미설정
+welcome → active(0) : "Start Tour" 클릭
+welcome → idle    : "Skip" 클릭 → localStorage 설정
+active(N) → active(N+1) : waitFor 조건 충족
+active(12) → complete : 마지막 스텝 완료
+complete → idle   : "Done" 클릭 → localStorage 설정
+active(any) → idle : "End tour" 클릭 → localStorage 설정
+```
+
+### 5.4 스토리지 키
+
+| 키 | 스토리지 | 용도 |
+|----|---------|------|
+| `onboarding-completed` | localStorage | 영구 완료 플래그 |
+| `onboarding-state` | sessionStorage | 페이지 이동 간 phase/step 유지 |
+
+### 5.5 스텝 구성 (13 Steps, 3 Phases)
+
+- **Phase 1** (Step 0~6): 검색 페이지 `/search` — 4개 탭 소개, 지도 핀 드롭, Search here, 바 카드 클릭
+- **Phase 2** (Step 7~9): 바 상세 `/bars/[id]` — Directions 버튼, DirectionsSheet 확인, Get Directions
+- **Phase 3** (Step 10~12): 길안내 `/directions` — 사용자 위치 점, 경로 재탐색, Clear Route
+
+### 5.6 통합 포인트
+
+| 파일 | 변경 내용 |
+|------|-----------|
+| `app/(main)/layout.tsx` | `<OnboardingProvider>`로 children 감싸기 |
+| `app/(main)/search/_components/search-page-content.tsx` | 탭 강제 전환, mapPin 이벤트, 탭 클릭 차단, 검색 결과 0건 시 goToStep(4) 복귀 |
+| `components/search/search-bar.tsx` | `id="search-here-button"` 추가 |
+| `app/(main)/bars/[id]/_components/bar-detail-sidebar.tsx` | `id="directions-button"`, 모바일/데스크탑 scrollIntoView |
+| `components/map/directions-sheet.tsx` | `id="get-directions-button"` 추가, `onInteractOutside` 핸들러로 온보딩 요소 클릭 시 Sheet 닫힘 방지 |
+| `components/map/map-view.tsx` | `relative z-0` 추가 (Google Maps compositor layer stacking context 수정) |
+| `app/(main)/directions/_components/directions-page-content.tsx` | `id="clear-route-button"`, `id="user-location-dot"` 추가 |
+| `app/(main)/profile/_components/profile-page-content.tsx` | "Replay Tour" 버튼 추가 |
+
+### 5.7 waitFor 조건 타입
+
+| 타입 | 설명 |
+|------|------|
+| `next` | 툴팁의 "Next" 버튼 클릭 |
+| `click` | 하이라이트된 타겟 요소 클릭 |
+| `mapPin` | 지도에 핀 드롭 이벤트 감지 |
+| `navigation` | 페이지 이동(pathname 변경) 감지 |
+
+## 6. 후속 코드 정합화가 필요한 항목
 
 - 레거시 `category` 관련 프론트 타입/컴포넌트 정리
 - 검색 결과에 "길안내 받기" 버튼 추가 (데스크탑/모바일 공통)
 
-## 6. 참조 우선순위
+## 7. 참조 우선순위
 
 - API 계약: [api.md](/Users/seongjae_lim/Desktop/my-project/docs/architecture/api.md)
 - DB/도메인 구조: [database.md](/Users/seongjae_lim/Desktop/my-project/docs/architecture/database.md)

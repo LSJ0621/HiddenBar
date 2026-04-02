@@ -11,6 +11,7 @@ import {
   Search,
   Shield,
   BookOpen,
+  RotateCcw,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -18,6 +19,7 @@ import { useProfile } from '@/hooks/queries/use-profile';
 import { useBookmarks } from '@/hooks/queries/use-bookmarks';
 import { useMyBars } from '@/hooks/queries/use-bars';
 import { useAuthStore } from '@/hooks/use-auth';
+import { useOnboarding } from '@/components/onboarding/use-onboarding';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -33,6 +35,7 @@ export function ProfilePageContent() {
   const { data: bookmarksData } = useBookmarks({ page: 1, limit: 4 });
   const { data: myBarsData } = useMyBars({ limit: 3 });
   const { logout } = useAuthStore();
+  const { replayTour } = useOnboarding();
 
   if (isUserLoading) {
     return (
@@ -81,6 +84,11 @@ export function ProfilePageContent() {
     router.push('/');
   };
 
+  const handleReplayTour = () => {
+    replayTour();
+    router.push('/search');
+  };
+
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex gap-6">
@@ -115,6 +123,14 @@ export function ProfilePageContent() {
               <BookOpen className="size-4 text-muted-foreground" />
               User Guide
             </Link>
+            <button
+              type="button"
+              onClick={handleReplayTour}
+              className="flex items-center gap-2.5 rounded-md px-3 py-2.5 text-sm font-medium transition-colors duration-150 hover:bg-accent"
+            >
+              <RotateCcw className="size-4 text-muted-foreground" />
+              Replay Tour
+            </button>
 
             {user.role === Role.ADMIN && (
               <Link

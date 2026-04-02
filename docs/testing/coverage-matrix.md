@@ -37,7 +37,7 @@
 | `backend/test/review-reports.e2e-spec.ts` | 신고 접수(9: 성공/유효성/인증/권한/비즈니스), 관리자 목록(6: 조회/필터/페이지네이션/인증), 관리자 상세(4: 조회/인증/404), 관리자 처리(8: HIDDEN/note/유효성/인증/409), 통합 시나리오(7: RESTORE/DELETE/중복/집계/가시성) — 총 34 시나리오 |
 | `backend/test/reviews.e2e-spec.ts` | 리뷰 생성(16: 성공/유효성/인증/비즈니스), 리뷰 목록(9: 페이지네이션/통계/가시성), 내 리뷰(3), 리뷰 수정(8), 리뷰 삭제(6: 사진 연쇄/통계), 사진 업로드(7: 다중/제한/파일타입), 사진 삭제(5), 관리자 상태 변경(9: HIDDEN↔PUBLISHED/통계), 관리자 삭제(6) — 총 69 시나리오 |
 
-### 1.3 프론트엔드 단위 테스트 (16 suites — 2026-03-26 기준 전체 통과)
+### 1.3 프론트엔드 단위 테스트 (20 suites — 2026-04-02 기준 전체 통과)
 
 | 파일 | 커버리지 범위 |
 |------|--------------|
@@ -57,6 +57,10 @@
 | `rating-badge.test.tsx` | 평점, 빈 상태, 크기 |
 | `address-search-input.test.tsx` | 입력, 결과 표시, 선택 |
 | `use-address-search.test.ts` | 쿼리, API 호출, 에러, 선택 |
+| `onboarding-provider.test.tsx` | 초기화 (완료 플래그, 인증, 경로), Start/Skip, 스텝 진행 (next/mapPin/navigation/불일치 무시), End Tour, Complete phase, sessionStorage 유지/복원 |
+| `onboarding-overlay.test.tsx` | target 미존재 시 미렌더링, 4-panel Portal 렌더링, pointer-events, data-onboarding 속성, aria-hidden, z-index, 4-panel 위치 계산, highlight 클래스 추가/제거, viewport 밖 target 미렌더링, 타임아웃 시 onRectChange null, OnboardingTargetTracker (null 렌더, rect 추적, highlight 미적용) |
+| `onboarding-tooltip.test.tsx` | 메시지 렌더링 (스텝별 텍스트, 진행률), Next 버튼 표시/숨김 (waitFor 조건별), End tour 버튼, tooltip role |
+| `onboarding-dialog.test.tsx` | Welcome 다이얼로그 (제목, 버튼, startTour/skipTour 콜백), Complete 다이얼로그 (제목, Done 버튼, endTour 콜백) |
 
 ### 1.4 프론트엔드 E2E 파일 (1 suite)
 

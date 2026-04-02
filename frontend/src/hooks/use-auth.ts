@@ -6,7 +6,7 @@ import { setUser, clearUser } from '@/store/auth-slice';
 import api from '@/lib/api';
 import { API_ENDPOINTS } from '@/lib/api-endpoints';
 import { getQueryClient } from '@/lib/query-client';
-import { isLoggedIn, clearIsLoggedIn } from '@/lib/token';
+import { isLoggedIn, clearIsLoggedIn, cacheUser, clearCachedUser } from '@/lib/token';
 import type { LoginDto, SignupDto, AuthResponse, User } from '@/types';
 
 /** Auth store hook — wraps Redux auth slice with API actions */
@@ -20,6 +20,7 @@ export const useAuthStore = () => {
   const login = async (credentials: LoginDto) => {
     const { data } = await api.post<AuthResponse>(API_ENDPOINTS.AUTH.LOGIN, credentials);
     dispatch(setUser(data.user));
+    cacheUser(data.user);
     return data;
   };
 
@@ -27,6 +28,7 @@ export const useAuthStore = () => {
   const signup = async (dto: SignupDto) => {
     const { data } = await api.post<AuthResponse>(API_ENDPOINTS.AUTH.SIGNUP, dto);
     dispatch(setUser(data.user));
+    cacheUser(data.user);
     return data;
   };
 
@@ -36,6 +38,7 @@ export const useAuthStore = () => {
       await api.post(API_ENDPOINTS.AUTH.LOGOUT);
     } finally {
       clearIsLoggedIn();
+      clearCachedUser();
       dispatch(clearUser());
       getQueryClient().clear();
     }
@@ -48,7 +51,9 @@ export const useAuthStore = () => {
     try {
       const { data } = await api.get<User>(API_ENDPOINTS.USERS.ME);
       dispatch(setUser(data));
+      cacheUser(data);
     } catch {
+      clearCachedUser();
       dispatch(clearUser());
     }
   };

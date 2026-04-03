@@ -5,62 +5,30 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { Navigation, RefreshCw, X } from 'lucide-react';
+import { Navigation, X } from 'lucide-react';
 import { TravelMode } from '@/types';
-import type { DirectionsResponse } from '@/types';
+import type { LatLng } from '@/types';
 import { useDirections } from '@/hooks/queries/use-maps';
 import { useUserLocation } from '@/hooks/use-user-location';
 import { useMediaQuery } from '@/hooks/use-media-query';
 import { DEFAULT_MAP_CENTER } from '@/lib/constants';
 import { queryKeys } from '@/lib/query-keys';
-import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { MapView } from '@/components/map/map-view';
 import { BarMarker } from '@/components/map/bar-marker';
 import { UserLocationDot } from '@/components/map/user-location-dot';
 import { DirectionsRoute, TransitDirectionsRoute } from '@/components/map/directions-route';
 import { DirectionsFitBounds } from '@/components/map/directions-fit-bounds';
-import { TravelModeSelector } from '@/components/map/travel-mode-selector';
 import { DirectionsInfo } from '@/components/map/directions-info';
-import { RouteSelector } from '@/components/map/route-selector';
-
 import type { DirectionsTargetBar } from '@/components/map/directions-sheet';
-
-/** mode별 sessionStorage 캐시 키 */
-const getDirectionsCacheKey = (mode: TravelMode) => `directions-cache-${mode}`;
-
-/** 메타데이터를 포함한 경로 캐시 구조 */
-interface DirectionsCache {
-  origin: { lat: number; lng: number };
-  destination: { lat: number; lng: number };
-  mode: TravelMode;
-  data: DirectionsResponse;
-}
-
-/** 모든 mode의 경로 캐시를 삭제한다 */
-function clearAllDirectionsCache() {
-  Object.values(TravelMode).forEach((m) => {
-    sessionStorage.removeItem(getDirectionsCacheKey(m));
-  });
-}
-
-/** 현재 mode의 sessionStorage 캐시를 로드하고 destination 일치 여부를 검증한다 */
-function loadDirectionsCache(
-  mode: TravelMode,
-  dest: { lat: number; lng: number } | null,
-): DirectionsCache | null {
-  if (typeof window === 'undefined') return null;
-  const stored = sessionStorage.getItem(getDirectionsCacheKey(mode));
-  if (stored) {
-    try {
-      const parsed = JSON.parse(stored) as DirectionsCache;
-      if (parsed.destination.lat === dest?.lat && parsed.destination.lng === dest?.lng) {
-        return parsed;
-      }
-    } catch { /* */ }
-  }
-  return null;
-}
+import {
+  clearAllDirectionsCache,
+  getDirectionsCacheKey,
+  loadDirectionsCache,
+  saveDirectionsCache,
+} from './directions-cache';
+import type { DirectionsCache } from './directions-cache';
+import { DirectionsControls } from './directions-controls';
 
 /** 경로 탭 메인 클라이언트 컴포넌트 */
 export function DirectionsPageContent() {
@@ -105,7 +73,7 @@ export function DirectionsPageContent() {
     : null;
 
   // 쿼리용 출발지: 캐시가 있으면 캐시의 origin, 없으면 최초 위치에서 1회 세팅
-  const [routeOrigin, setRouteOrigin] = useState<{ lat: number; lng: number } | null>(
+  const [routeOrigin, setRouteOrigin] = useState<LatLng | null>(
     () => cachedDirections?.origin ?? null,
   );
 
@@ -133,7 +101,7 @@ export function DirectionsPageContent() {
         mode,
         data,
       };
-      sessionStorage.setItem(getDirectionsCacheKey(mode), JSON.stringify(cache));
+      saveDirectionsCache(cache);
       setCachedDirections(cache);
     }
   }, [data, destination, mode]);
@@ -215,6 +183,18 @@ export function DirectionsPageContent() {
     </>
   );
 
+  /** 공통 DirectionsControls props */
+  const controlsProps = {
+    mode,
+    onModeChange: setMode,
+    onRefresh: handleRefresh,
+    onClearRoute: handleClearRoute,
+    routes,
+    selectedRouteIndex,
+    onSelectRoute: setSelectedRouteIndex,
+    isFetching,
+  };
+
   /** 길안내 정보 패널 */
   const directionsPanel = (
     <div className="space-y-4 p-4">
@@ -225,19 +205,7 @@ export function DirectionsPageContent() {
           Clear Route
         </Button>
       </div>
-      <div className="flex items-center gap-2">
-        <TravelModeSelector mode={mode} onChange={setMode} />
-        <Button variant="ghost" size="icon" onClick={handleRefresh} disabled={isFetching} aria-label="Refresh directions">
-          <RefreshCw className={cn('size-4', isFetching && 'animate-spin')} />
-        </Button>
-      </div>
-      {mode === TravelMode.TRANSIT && (
-        <RouteSelector
-          routes={routes}
-          selectedIndex={selectedRouteIndex}
-          onSelect={setSelectedRouteIndex}
-        />
-      )}
+      <DirectionsControls {...controlsProps} layout="desktop" />
       <DirectionsInfo
         route={route}
         isLoading={isLoading && !effectiveData}
@@ -277,25 +245,7 @@ export function DirectionsPageContent() {
             </MapView>
           </div>
           <div className="space-y-4 p-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <TravelModeSelector mode={mode} onChange={setMode} />
-                <Button variant="ghost" size="icon" onClick={handleRefresh} disabled={isFetching} aria-label="Refresh directions">
-                  <RefreshCw className={cn('size-4', isFetching && 'animate-spin')} />
-                </Button>
-              </div>
-              <Button data-onboarding-target="clear-route" variant="ghost" size="sm" onClick={handleClearRoute}>
-                <X className="mr-1 size-3" />
-                Clear Route
-              </Button>
-            </div>
-            {mode === TravelMode.TRANSIT && (
-              <RouteSelector
-                routes={routes}
-                selectedIndex={selectedRouteIndex}
-                onSelect={setSelectedRouteIndex}
-              />
-            )}
+            <DirectionsControls {...controlsProps} layout="mobile" />
             <DirectionsInfo
               route={route}
               isLoading={isLoading && !effectiveData}

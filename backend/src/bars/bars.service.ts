@@ -17,6 +17,8 @@ import { CreateBarDto } from './dto/create-bar.dto.js';
 import { UpdateBarDto } from './dto/update-bar.dto.js';
 import { MyBarsQueryDto } from './dto/my-bars-query.dto.js';
 import { NearbyBarsDto } from './dto/nearby-bars.dto.js';
+import { DEFAULT_CURRENCY } from '../common/constants/currency.js';
+import { buildPaginationMeta } from '../common/utils/pagination.js';
 
 @Injectable()
 export class BarsService {
@@ -31,7 +33,7 @@ export class BarsService {
   /**
    * 가게를 등록한다. 트랜잭션으로 bar + menuItems + operatingHours를 생성한다.
    */
-  async create(dto: CreateBarDto, user: { id: number }): Promise<Bar> {
+  async create(dto: CreateBarDto, user: { id: number }): Promise<Bar & { isBookmarked: boolean; bookmarkCount: number; averageRating: number; reviewCount: number }> {
     const {
       menuItems: menuItemsDto,
       operatingHours: operatingHoursDto,
@@ -50,7 +52,7 @@ export class BarsService {
         const menuItems = menuItemsDto.map((item) =>
           manager.create(MenuItem, {
             ...item,
-            currency: 'USD',
+            currency: DEFAULT_CURRENCY,
             barId: saved.id,
           }),
         );
@@ -84,7 +86,7 @@ export class BarsService {
   async findOne(
     id: number,
     user: { id: number; role: Role },
-  ): Promise<Bar & { isBookmarked: boolean; bookmarkCount: number }> {
+  ): Promise<Bar & { isBookmarked: boolean; bookmarkCount: number; averageRating: number; reviewCount: number }> {
     const bar = await this.barRepository.findOne({
       where: { id },
       relations: ['owner', 'photos', 'menuItems', 'operatingHours', 'reviewStats'],
@@ -145,7 +147,7 @@ export class BarsService {
         await manager.update(MenuItem, { barId: id }, { deletedAt: new Date() });
         if (menuItems.length > 0) {
           const items = menuItems.map((item) =>
-            manager.create(MenuItem, { ...item, currency: 'USD', barId: id }),
+            manager.create(MenuItem, { ...item, currency: DEFAULT_CURRENCY, barId: id }),
           );
           await manager.save(MenuItem, items);
         }
@@ -181,6 +183,25 @@ export class BarsService {
   }
 
   /**
+   * 가게와 관련 엔티티를 소프트 삭제한다. 외부 트랜잭션에서도 호출 가능하다.
+   */
+  async softDeleteBarWithRelations(
+    barId: number,
+    manager: import('typeorm').EntityManager,
+  ): Promise<void> {
+    const barEntity = await manager.findOne(Bar, { where: { id: barId } });
+    if (!barEntity) {
+      throw new NotFoundException('Bar not found.');
+    }
+    const now = new Date();
+    await manager.update(BarPhoto, { barId }, { deletedAt: now });
+    await manager.update(MenuItem, { barId }, { deletedAt: now });
+    await manager.update(OperatingHours, { barId }, { deletedAt: now });
+    await manager.update(Bookmark, { barId }, { deletedAt: now });
+    await manager.softRemove(barEntity);
+  }
+
+  /**
    * 가게를 소프트 삭제한다.
    */
   async remove(id: number, user: { id: number }): Promise<void> {
@@ -195,12 +216,7 @@ export class BarsService {
     }
 
     await runInTransaction(this.dataSource, async (manager) => {
-      const now = new Date();
-      await manager.update(BarPhoto, { barId: id }, { deletedAt: now });
-      await manager.update(MenuItem, { barId: id }, { deletedAt: now });
-      await manager.update(OperatingHours, { barId: id }, { deletedAt: now });
-      await manager.update(Bookmark, { barId: id }, { deletedAt: now });
-      await manager.softRemove(Bar, bar);
+      await this.softDeleteBarWithRelations(id, manager);
     });
   }
 
@@ -313,12 +329,7 @@ export class BarsService {
 
     return {
       items: mappedItems,
-      meta: {
-        page,
-        limit,
-        totalItems,
-        totalPages: Math.ceil(totalItems / limit),
-      },
+      meta: buildPaginationMeta(page, limit, totalItems),
     };
   }
 }

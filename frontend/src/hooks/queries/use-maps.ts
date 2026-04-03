@@ -5,13 +5,13 @@ import axios from 'axios';
 import api from '@/lib/api';
 import { API_ENDPOINTS } from '@/lib/api-endpoints';
 import { queryKeys } from '@/lib/query-keys';
-import type { DirectionsResponse } from '@/types';
+import type { DirectionsResponse, LatLng } from '@/types';
 import { TravelMode } from '@/types';
 
 /** Fetch directions between two points */
 export const useDirections = (
-  origin: { lat: number; lng: number } | null,
-  dest: { lat: number; lng: number } | null,
+  origin: LatLng | null,
+  dest: LatLng | null,
   mode: TravelMode = TravelMode.TRANSIT,
   options?: { enabled?: boolean },
 ) => {

@@ -70,7 +70,19 @@
 - 경로 탭은 검색 결과 바를 캐시하여 목록으로 보여주고, 개별 바 클릭 시 대중교통(UI 기본) 길안내를 표시.
 - 검색 타입과 훅은 현재 이름/위치 기반 검색 계약을 따른다.
 - 검색 화면에서는 현재 위치 기반 주변 추천과 명시적 위치 검색을 함께 다룬다.
+- 검색 화면(`search-page-content.tsx`)은 지도 패널(`search-map-panel.tsx`), InfoWindow(`selected-bar-info-window.tsx`), 결과 리스트(`search-results-panel.tsx`)로 분리되어 있으며, 온보딩 연동은 `hooks/use-search-onboarding.ts`, 스크롤 복원은 `hooks/use-scroll-restoration.ts`에 위치한다.
+- 검색 바(`components/search/search-bar.tsx`)는 주소 입력(`address-input.tsx`), 바 이름 입력(`name-input.tsx`), 각각의 로직 훅(`hooks/use-address-field.ts`, `hooks/use-name-field.ts`)으로 분할되어 있다.
 - `category` 관련 레거시 타입/컴포넌트가 일부 남아 있을 수 있으나, SoT 기준 활성 개념은 아니다.
+
+### 4.1 공통 유틸리티
+
+| 파일 | 역할 |
+|------|------|
+| `lib/error-utils.ts` | `showErrorToast(error, fallback)` — AxiosError 판별 + toast.error 통합. 8개 파일에서 공유 |
+| `lib/format-utils.ts` | `formatDistance(km)` — 거리 포매팅 유틸 |
+| `components/ui/password-input.tsx` | 비밀번호 표시/숨기기 토글이 포함된 Input 컴포넌트. 4개 폼에서 공유 |
+| `components/auth/email-verification-steps.tsx` | 이메일 인증 2단계(이메일 입력 → 코드 인증 + 재전송 Dialog) 공통 UI. signup-form과 reset-password-form에서 공유 |
+| `types/common.ts` → `LatLng` | `{ lat: number; lng: number }` 좌표 타입. 12개 파일에서 공유 |
 
 ## 5. 온보딩 가이드 시스템
 
@@ -83,7 +95,9 @@
 | 파일 | 역할 |
 |------|------|
 | `components/onboarding/onboarding-steps.ts` | 13개 스텝 정의 (target, message, placement, waitFor) |
-| `components/onboarding/onboarding-provider.tsx` | React Context + 상태 머신 + storage 관리 + 오버레이/툴팁/다이얼로그 렌더링 |
+| `components/onboarding/onboarding-provider.tsx` | React Context + 오버레이/툴팁/다이얼로그 렌더링 (상태 머신/storage는 아래 모듈로 분리) |
+| `components/onboarding/onboarding-storage.ts` | persist/restore/clear 유틸 + 완료 플래그(`onboarding-completed`) 관리 |
+| `components/onboarding/onboarding-state-machine.ts` | `advanceStep` 로직, `OnboardingPhase`/`OnboardingState` 타입, `initialState` |
 | `components/onboarding/use-onboarding.ts` | Context 소비 훅 (`useOnboarding`) |
 | `components/onboarding/onboarding-overlay.tsx` | 풀스크린 오버레이 + CSS clip-path cutout |
 | `components/onboarding/onboarding-tooltip.tsx` | 위치 계산 + 메시지/버튼 tooltip |
@@ -122,8 +136,8 @@ active(any) → idle : "End tour" 클릭 → localStorage 설정
 | 파일 | 변경 내용 |
 |------|-----------|
 | `app/(main)/layout.tsx` | `<OnboardingProvider>`로 children 감싸기 |
-| `app/(main)/search/_components/search-page-content.tsx` | 탭 강제 전환, mapPin 이벤트, 탭 클릭 차단, 검색 결과 0건 시 goToStep(4) 복귀 |
-| `components/search/search-bar.tsx` | `id="search-here-button"` 추가 |
+| `app/(main)/search/_components/search-page-content.tsx` | 탭 강제 전환, mapPin 이벤트, 탭 클릭 차단, 검색 결과 0건 시 goToStep(4) 복귀. 온보딩 관련 로직은 `hooks/use-search-onboarding.ts`로 추출됨 |
+| `components/search/search-bar.tsx` | `id="search-here-button"` 추가. 내부 5분할: `address-input.tsx`, `name-input.tsx`, `hooks/use-address-field.ts`, `hooks/use-name-field.ts` |
 | `app/(main)/bars/[id]/_components/bar-detail-sidebar.tsx` | `id="directions-button"`, 모바일/데스크탑 scrollIntoView |
 | `components/map/directions-sheet.tsx` | `id="get-directions-button"` 추가, `onInteractOutside` 핸들러로 온보딩 요소 클릭 시 Sheet 닫힘 방지 |
 | `components/map/map-view.tsx` | `relative z-0` 추가 (Google Maps compositor layer stacking context 수정) |

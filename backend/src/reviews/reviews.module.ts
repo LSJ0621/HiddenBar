@@ -9,6 +9,7 @@ import { AwsModule } from '../external/aws/aws.module.js';
 import { ReviewsController } from './reviews.controller.js';
 import { ReviewsService } from './reviews.service.js';
 import { ReviewStatsService } from './review-stats.service.js';
+import { ReviewPhotosService } from './review-photos.service.js';
 
 @Module({
   imports: [
@@ -16,8 +17,8 @@ import { ReviewStatsService } from './review-stats.service.js';
     AwsModule,
   ],
   controllers: [ReviewsController],
-  providers: [ReviewsService, ReviewStatsService],
-  exports: [ReviewsService, ReviewStatsService],
+  providers: [ReviewsService, ReviewPhotosService, ReviewStatsService],
+  exports: [ReviewsService, ReviewPhotosService, ReviewStatsService],
 })
 export class ReviewsModule implements OnModuleInit {
   constructor(private readonly dataSource: DataSource) {}

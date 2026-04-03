@@ -53,6 +53,7 @@ const mockDataSource = () => ({
       delete: jest.fn().mockResolvedValue({ affected: 1 }),
       update: jest.fn().mockResolvedValue({ affected: 1 }),
       softRemove: jest.fn().mockResolvedValue(undefined),
+      findOne: jest.fn(),
     },
   }),
 });
@@ -427,10 +428,11 @@ describe('BarsService', () => {
     it('should soft delete bar and cascade to related entities', async () => {
       const barToDelete = { ...mockBar, ownerId: mockUser.id };
       barRepo.findOne.mockResolvedValue(barToDelete);
+      const qr = dataSource.createQueryRunner();
+      qr.manager.findOne.mockResolvedValue(barToDelete);
 
       await service.remove(1, mockUser);
 
-      const qr = dataSource.createQueryRunner();
       expect(qr.manager.update).toHaveBeenCalledTimes(4);
       expect(qr.manager.softRemove).toHaveBeenCalled();
     });

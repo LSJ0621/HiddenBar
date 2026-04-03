@@ -3,8 +3,8 @@
 import { use, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
-import { AxiosError } from 'axios';
 import { ArrowLeft, Check, X, Trash2 } from 'lucide-react';
+import { showErrorToast } from '@/lib/error-utils';
 import {
   useAdminBarDetail,
   useApproveBar,
@@ -46,9 +46,7 @@ export function BarReviewContent({ params }: BarReviewContentProps) {
       toast.success('Bar has been approved');
       router.push('/admin/bars');
     } catch (error) {
-      if (error instanceof AxiosError) {
-        toast.error(error.response?.data?.message ?? 'Failed to approve');
-      }
+      showErrorToast(error, 'Failed to approve');
     }
   };
 
@@ -58,9 +56,7 @@ export function BarReviewContent({ params }: BarReviewContentProps) {
       toast.success('Bar has been rejected');
       router.push('/admin/bars');
     } catch (error) {
-      if (error instanceof AxiosError) {
-        toast.error(error.response?.data?.message ?? 'Failed to reject');
-      }
+      showErrorToast(error, 'Failed to reject');
     }
   };
 
@@ -70,9 +66,7 @@ export function BarReviewContent({ params }: BarReviewContentProps) {
       toast.success('Bar has been deleted');
       router.push('/admin/bars');
     } catch (error) {
-      if (error instanceof AxiosError) {
-        toast.error(error.response?.data?.message ?? 'Failed to delete');
-      }
+      showErrorToast(error, 'Failed to delete');
     }
   };
 

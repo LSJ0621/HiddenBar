@@ -8,6 +8,7 @@ import {
 } from '@nestjs/common';
 import { DataSource } from 'typeorm';
 import { ReviewsService } from './reviews.service.js';
+import { ReviewPhotosService } from './review-photos.service.js';
 import { ReviewStatsService } from './review-stats.service.js';
 import { Review } from '../entities/review.entity.js';
 import { ReviewPhoto } from '../entities/review-photo.entity.js';
@@ -80,6 +81,7 @@ const mockReviewStatsService = () => ({
 
 describe('ReviewsService', () => {
   let service: ReviewsService;
+  let photosService: ReviewPhotosService;
   let reviewRepo: ReturnType<typeof mockReviewRepo>;
   let reviewPhotoRepo: ReturnType<typeof mockReviewPhotoRepo>;
   let barRepo: ReturnType<typeof mockBarRepo>;
@@ -100,6 +102,7 @@ describe('ReviewsService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         ReviewsService,
+        ReviewPhotosService,
         { provide: getRepositoryToken(Review), useFactory: mockReviewRepo },
         { provide: getRepositoryToken(ReviewPhoto), useFactory: mockReviewPhotoRepo },
         { provide: getRepositoryToken(Bar), useFactory: mockBarRepo },
@@ -111,6 +114,7 @@ describe('ReviewsService', () => {
     }).compile();
 
     service = module.get<ReviewsService>(ReviewsService);
+    photosService = module.get<ReviewPhotosService>(ReviewPhotosService);
     reviewRepo = module.get(getRepositoryToken(Review));
     reviewPhotoRepo = module.get(getRepositoryToken(ReviewPhoto));
     barRepo = module.get(getRepositoryToken(Bar));
@@ -546,7 +550,7 @@ describe('ReviewsService', () => {
       reviewRepo.findOne.mockResolvedValue({ ...existingReview });
       reviewPhotoRepo.count.mockResolvedValue(0);
 
-      const result = await service.uploadPhotos(1, [mockFile], mockUser);
+      const result = await photosService.uploadPhotos(1, [mockFile], mockUser);
 
       expect(result).toBeDefined();
       expect(result.length).toBe(1);
@@ -557,7 +561,7 @@ describe('ReviewsService', () => {
       reviewPhotoRepo.count.mockResolvedValue(4);
 
       await expect(
-        service.uploadPhotos(1, [mockFile, mockFile], mockUser),
+        photosService.uploadPhotos(1, [mockFile, mockFile], mockUser),
       ).rejects.toThrow(BadRequestException);
     });
 
@@ -569,7 +573,7 @@ describe('ReviewsService', () => {
       });
       reviewPhotoRepo.count.mockResolvedValue(0);
 
-      await service.uploadPhotos(1, [mockFile], mockUser);
+      await photosService.uploadPhotos(1, [mockFile], mockUser);
 
       expect(statsService.adjustPhotoReviewCount).toHaveBeenCalledWith(1, 1, manager);
     });
@@ -582,7 +586,7 @@ describe('ReviewsService', () => {
       });
       reviewPhotoRepo.count.mockResolvedValue(0);
 
-      await service.uploadPhotos(1, [mockFile], mockUser);
+      await photosService.uploadPhotos(1, [mockFile], mockUser);
 
       expect(statsService.adjustPhotoReviewCount).not.toHaveBeenCalled();
     });
@@ -602,7 +606,7 @@ describe('ReviewsService', () => {
       reviewRepo.findOne.mockResolvedValue({ ...existingReview });
       reviewPhotoRepo.findOne.mockResolvedValue({ id: 10, reviewId: 1 });
 
-      await service.removePhoto(1, 10, mockUser);
+      await photosService.removePhoto(1, 10, mockUser);
 
       expect(manager.softRemove).toHaveBeenCalled();
       expect(manager.save).toHaveBeenCalled();
@@ -615,7 +619,7 @@ describe('ReviewsService', () => {
       });
       reviewPhotoRepo.findOne.mockResolvedValue({ id: 10, reviewId: 1 });
 
-      await service.removePhoto(1, 10, mockUser);
+      await photosService.removePhoto(1, 10, mockUser);
 
       expect(statsService.adjustPhotoReviewCount).toHaveBeenCalledWith(1, -1, manager);
     });
@@ -628,7 +632,7 @@ describe('ReviewsService', () => {
       });
       reviewPhotoRepo.findOne.mockResolvedValue({ id: 10, reviewId: 1 });
 
-      await service.removePhoto(1, 10, mockUser);
+      await photosService.removePhoto(1, 10, mockUser);
 
       expect(statsService.adjustPhotoReviewCount).not.toHaveBeenCalled();
     });
@@ -637,7 +641,7 @@ describe('ReviewsService', () => {
       reviewRepo.findOne.mockResolvedValue({ ...existingReview });
       reviewPhotoRepo.findOne.mockResolvedValue(null);
 
-      await expect(service.removePhoto(1, 999, mockUser)).rejects.toThrow(
+      await expect(photosService.removePhoto(1, 999, mockUser)).rejects.toThrow(
         NotFoundException,
       );
     });

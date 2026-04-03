@@ -2,10 +2,11 @@
 
 import { useEffect, useRef } from 'react';
 import { useMap } from '@vis.gl/react-google-maps';
+import type { LatLng } from '@/types';
 
 interface SearchFitBoundsProps {
   /** 바 좌표 목록 */
-  points: { lat: number; lng: number }[];
+  points: LatLng[];
 }
 
 /** 검색 결과 바들의 좌표에 맞게 지도 bounds를 자동 조정 */

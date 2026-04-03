@@ -2,10 +2,11 @@
 
 import { useEffect } from 'react';
 import { useMap } from '@vis.gl/react-google-maps';
+import type { LatLng } from '@/types';
 
 interface DirectionsFitBoundsProps {
-  origin: { lat: number; lng: number };
-  destination: { lat: number; lng: number };
+  origin: LatLng;
+  destination: LatLng;
 }
 
 /** Automatically adjusts map bounds to fit both origin and destination */

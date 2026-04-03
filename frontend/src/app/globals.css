@@ -45,6 +45,14 @@
   --color-success-foreground: var(--success-foreground);
   --color-teal: var(--teal);
   --color-cream-dim: var(--cream-dim);
+  --color-landing-amber: var(--landing-amber);
+  --color-landing-cream: var(--landing-cream);
+  --color-landing-tan: var(--landing-tan);
+  --color-landing-brown: var(--landing-brown);
+  --color-landing-teal: var(--landing-teal);
+  --color-landing-charcoal: var(--landing-charcoal);
+  --color-landing-dark: var(--landing-dark);
+  --color-landing-deep: var(--landing-deep);
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -66,6 +74,16 @@
   /* Accent Colors */
   --teal: oklch(0.55 0.15 175);
   --cream-dim: oklch(0.45 0.015 50);
+
+  /* Landing / Brand Colors */
+  --landing-amber: #e8973a;
+  --landing-cream: #F0E0C0;
+  --landing-tan: #9a8060;
+  --landing-brown: #9B5E1A;
+  --landing-teal: #3ECFB2;
+  --landing-charcoal: #120e0a;
+  --landing-dark: #0a0604;
+  --landing-deep: #1a1410;
 
   /* --- Light Mode --- */
   /* Surfaces */

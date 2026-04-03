@@ -14,6 +14,15 @@ import {
 
 export const SEARCH_DEBOUNCE_MS = 300;
 
+/** 검색 결과 페이지당 항목 수 */
+export const SEARCH_PAGE_SIZE = 5;
+
+/** 검색 쿼리 stale time (5분) */
+export const SEARCH_STALE_TIME = 5 * 60 * 1000;
+
+/** 검색 쿼리 garbage collection time (30분) */
+export const SEARCH_GC_TIME = 30 * 60 * 1000;
+
 export const NEARBY_RADIUS_KM = 5;
 
 export const NEARBY_LIMIT = 6;

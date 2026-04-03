@@ -97,9 +97,9 @@ function StepConnector() {
   return (
     <div className="flex justify-center py-4">
       <div className="flex flex-col items-center gap-1">
-        <div className="size-2.5 rounded-full border-2 border-[#3ECFB2] bg-[#3ECFB2]/20" />
-        <div className="h-10 w-px bg-gradient-to-b from-[#3ECFB2] to-[#e8973a]" />
-        <div className="size-2.5 rounded-full border-2 border-[#e8973a] bg-[#e8973a]/20" />
+        <div className="size-2.5 rounded-full border-2 border-landing-teal bg-landing-teal/20" />
+        <div className="h-10 w-px bg-gradient-to-b from-landing-teal to-landing-amber" />
+        <div className="size-2.5 rounded-full border-2 border-landing-amber bg-landing-amber/20" />
       </div>
     </div>
   );
@@ -112,9 +112,9 @@ function IconCluster({ icons }: { icons: LucideIcon[] }) {
       {icons.map((Icon, i) => (
         <div
           key={i}
-          className="flex size-11 items-center justify-center rounded-full bg-[#e8973a]/10 md:size-12"
+          className="flex size-11 items-center justify-center rounded-full bg-landing-amber/10 md:size-12"
         >
-          <Icon className="size-5 text-[#e8973a]" />
+          <Icon className="size-5 text-landing-amber" />
         </div>
       ))}
     </div>
@@ -124,9 +124,9 @@ function IconCluster({ icons }: { icons: LucideIcon[] }) {
 /** Individual step card */
 function StepCard({ step }: { step: GuideStep }) {
   return (
-    <div className="rounded-tl-2xl rounded-br border border-[#9B5E1A]/15 bg-[#120e0a] p-5 md:p-8">
+    <div className="rounded-tl-2xl rounded-br border border-landing-brown/15 bg-landing-charcoal p-5 md:p-8">
       {/* Step number */}
-      <p className="mb-4 font-mono text-[9px] tracking-[0.42em] uppercase text-[#3ECFB2]">
+      <p className="mb-4 font-mono text-[9px] tracking-[0.42em] uppercase text-landing-teal">
         STEP {step.number}
       </p>
 
@@ -134,12 +134,12 @@ function StepCard({ step }: { step: GuideStep }) {
       <IconCluster icons={step.icons} />
 
       {/* Title */}
-      <h3 className="mb-3 text-xl font-semibold text-[#F0E0C0]">
+      <h3 className="mb-3 text-xl font-semibold text-landing-cream">
         {step.title}
       </h3>
 
       {/* Description */}
-      <p className="mb-5 text-sm leading-relaxed text-[#9a8060]">
+      <p className="mb-5 text-sm leading-relaxed text-landing-tan">
         {step.description}
       </p>
 
@@ -147,10 +147,10 @@ function StepCard({ step }: { step: GuideStep }) {
       <ul className="space-y-3">
         {step.bullets.map((bullet) => (
           <li key={bullet.label} className="flex gap-3 text-sm">
-            <span className="shrink-0 font-mono text-[10px] font-medium tracking-wider text-[#e8973a]">
+            <span className="shrink-0 font-mono text-[10px] font-medium tracking-wider text-landing-amber">
               {bullet.label}
             </span>
-            <span className="text-xs leading-relaxed text-[#9a8060]">
+            <span className="text-xs leading-relaxed text-landing-tan">
               {bullet.detail}
             </span>
           </li>
@@ -175,18 +175,18 @@ function StepCard({ step }: { step: GuideStep }) {
 /** User guide main page */
 export function GuidePageContent() {
   return (
-    <div className="bg-[#0a0604]">
+    <div className="bg-landing-dark">
       <div className="mx-auto max-w-2xl px-4 py-12 md:py-20">
         {/* Page header */}
         <header className="mb-12 md:mb-16">
-          <p className="section-label-line mb-4 font-mono text-[9px] tracking-[0.42em] uppercase text-[#3ECFB2]">
+          <p className="section-label-line mb-4 font-mono text-[9px] tracking-[0.42em] uppercase text-landing-teal">
             SECRET HANDBOOK
           </p>
-          <h1 className="mb-4 text-[clamp(1.8rem,4vw,2.8rem)] font-semibold leading-tight text-[#F0E0C0]">
+          <h1 className="mb-4 text-[clamp(1.8rem,4vw,2.8rem)] font-semibold leading-tight text-landing-cream">
             Hidden Bar{' '}
-            <em className="font-display text-[#e8973a] italic">User Guide</em>
+            <em className="font-display text-landing-amber italic">User Guide</em>
           </h1>
-          <p className="max-w-lg text-sm leading-relaxed text-[#9a8060]">
+          <p className="max-w-lg text-sm leading-relaxed text-landing-tan">
             Three steps to discover your next secret bar.
             <br />
             Ready to open the door?
@@ -204,8 +204,8 @@ export function GuidePageContent() {
         </div>
 
         {/* Footer CTA */}
-        <footer className="mt-12 border-t border-[#9B5E1A]/10 pt-10 text-center md:mt-16">
-          <p className="mb-6 font-display text-lg text-[#F0E0C0]">
+        <footer className="mt-12 border-t border-landing-brown/10 pt-10 text-center md:mt-16">
+          <p className="mb-6 font-display text-lg text-landing-cream">
             It&apos;s your turn to open the door.
           </p>
           <Button asChild size="lg" className="gap-2">

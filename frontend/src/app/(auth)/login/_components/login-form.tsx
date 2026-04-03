@@ -1,12 +1,11 @@
 'use client';
 
-import { useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod/v4';
 import { standardSchemaResolver } from '@hookform/resolvers/standard-schema';
-import { Mail, Lock, Eye, EyeOff, Loader2 } from 'lucide-react';
+import { Mail, Lock, Loader2 } from 'lucide-react';
 
 import { AxiosError } from 'axios';
 
@@ -14,6 +13,7 @@ import { useAuthStore } from '@/hooks/use-auth';
 import { getSafeRedirect } from '@/lib/validate-redirect';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { PasswordInput } from '@/components/ui/password-input';
 import {
   Card,
   CardContent,
@@ -44,8 +44,6 @@ export function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { login } = useAuthStore();
-  const [showPassword, setShowPassword] = useState(false);
-
   const form = useForm<LoginFormValues>({
     resolver: standardSchemaResolver(loginSchema),
     defaultValues: {
@@ -129,25 +127,12 @@ export function LoginForm() {
                   <FormControl>
                     <div className="relative">
                       <Lock className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-                      <Input
-                        type={showPassword ? 'text' : 'password'}
+                      <PasswordInput
                         placeholder="Enter your password"
-                        className="bg-background/50 pl-10 pr-10"
+                        className="bg-background/50 pl-10"
                         data-testid="login-password-input"
                         {...field}
                       />
-                      <button
-                        type="button"
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                        onClick={() => setShowPassword((prev) => !prev)}
-                        aria-label={showPassword ? 'Hide password' : 'Show password'}
-                      >
-                        {showPassword ? (
-                          <EyeOff className="size-4" />
-                        ) : (
-                          <Eye className="size-4" />
-                        )}
-                      </button>
                     </div>
                   </FormControl>
                   <FormMessage />

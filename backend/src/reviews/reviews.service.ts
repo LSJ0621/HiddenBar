@@ -3,7 +3,6 @@ import {
   NotFoundException,
   ForbiddenException,
   ConflictException,
-  BadRequestException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource } from 'typeorm';
@@ -12,63 +11,13 @@ import { ReviewPhoto } from '../entities/review-photo.entity.js';
 import { Bar } from '../entities/bar.entity.js';
 import { BarReviewStats } from '../entities/bar-review-stats.entity.js';
 import { ReviewStatsService } from './review-stats.service.js';
-import { S3Client } from '../external/aws/clients/s3.client.js';
 import { runInTransaction } from '../common/utils/transaction.js';
 import { BarStatus, ReviewStatus, Role } from '@my-project/shared';
 import { CreateReviewDto } from './dto/create-review.dto.js';
 import { UpdateReviewDto } from './dto/update-review.dto.js';
 import { ListReviewsQueryDto } from './dto/list-reviews-query.dto.js';
-
-/**
- * Review 엔티티를 프론트엔드 ReviewItem 형태로 변환한다.
- */
-function toReviewItem(review: Review) {
-  return {
-    id: review.id,
-    rating: review.rating,
-    content: review.content,
-    visitedAt: review.visitedAt,
-    status: review.status,
-    author: review.user
-      ? {
-          id: review.user.id,
-          name: review.user.name,
-          profileImageUrl: review.user.profileImage,
-        }
-      : null,
-    photos: (review.photos || []).map((photo) => ({
-      id: photo.id,
-      url: photo.url,
-      sortOrder: photo.sortOrder,
-    })),
-    createdAt: review.createdAt,
-    updatedAt: review.updatedAt,
-  };
-}
-
-/**
- * BarReviewStats를 프론트엔드 ReviewStats 형태로 변환한다.
- */
-function toReviewStats(stats: BarReviewStats | null) {
-  if (!stats) {
-    return {
-      totalCount: 0,
-      averageRating: 0,
-      distribution: [1, 2, 3, 4, 5].map((r) => ({ rating: r, count: 0 })),
-    };
-  }
-  return {
-    totalCount: stats.reviewCount,
-    averageRating: Number(stats.ratingAvg),
-    distribution: [
-      { rating: 1, count: stats.rating1Count },
-      { rating: 2, count: stats.rating2Count },
-      { rating: 3, count: stats.rating3Count },
-      { rating: 4, count: stats.rating4Count },
-      { rating: 5, count: stats.rating5Count },
-    ],
-  };
-}
+import { buildPaginationMeta } from '../common/utils/pagination.js';
+import { toReviewItem, toReviewStats } from './review-presenter.js';
 
 @Injectable()
 export class ReviewsService {
@@ -83,7 +32,6 @@ export class ReviewsService {
     private readonly barReviewStatsRepository: Repository<BarReviewStats>,
     private readonly reviewStatsService: ReviewStatsService,
     private readonly dataSource: DataSource,
-    private readonly s3Client: S3Client,
   ) {}
 
   /**
@@ -194,12 +142,7 @@ export class ReviewsService {
 
     return {
       items: items.map(toReviewItem),
-      meta: {
-        page,
-        limit,
-        totalItems,
-        totalPages: Math.ceil(totalItems / limit),
-      },
+      meta: buildPaginationMeta(page, limit, totalItems),
       stats: toReviewStats(stats),
     };
   }
@@ -296,139 +239,6 @@ export class ReviewsService {
           review.barId,
           review.rating,
           review.photoCount > 0,
-          manager,
-        );
-      }
-    });
-  }
-
-  /**
-   * 리뷰 사진을 업로드한다.
-   */
-  async uploadPhotos(
-    reviewId: number,
-    files: Express.Multer.File[],
-    user: { id: number },
-  ): Promise<ReviewPhoto[]> {
-    const review = await this.reviewRepository.findOne({
-      where: { id: reviewId },
-    });
-
-    if (!review) {
-      throw new NotFoundException('Review not found.');
-    }
-
-    if (review.userId !== user.id) {
-      throw new ForbiddenException('You can only upload photos to your own review.');
-    }
-
-    const existingCount = await this.reviewPhotoRepository.count({
-      where: { reviewId },
-    });
-
-    if (existingCount + files.length > 5) {
-      throw new BadRequestException(
-        'A review can have at most 5 photos.',
-      );
-    }
-
-    const uploadResults = await Promise.allSettled(
-      files.map((file) => this.s3Client.uploadReviewPhoto(file, reviewId)),
-    );
-
-    const successfulUploads: { url: string; s3Key: string; file: Express.Multer.File }[] = [];
-    for (let i = 0; i < uploadResults.length; i++) {
-      const result = uploadResults[i];
-      if (result.status === 'fulfilled') {
-        successfulUploads.push({ ...result.value, file: files[i] });
-      }
-    }
-
-    if (successfulUploads.length === 0) {
-      throw new BadRequestException('Failed to upload photos.');
-    }
-
-    const hadPhotos = review.photoCount > 0;
-
-    try {
-      return await runInTransaction(this.dataSource, async (manager) => {
-        const photos: ReviewPhoto[] = [];
-        for (let i = 0; i < successfulUploads.length; i++) {
-          const { url, s3Key, file } = successfulUploads[i];
-          const photo = manager.create(ReviewPhoto, {
-            reviewId,
-            url,
-            s3Key,
-            mimeType: file.mimetype || null,
-            sizeBytes: file.size || null,
-            sortOrder: existingCount + i,
-          });
-          photos.push(await manager.save(photo));
-        }
-
-        review.photoCount = existingCount + successfulUploads.length;
-        await manager.save(review);
-
-        if (
-          !hadPhotos &&
-          review.photoCount > 0 &&
-          review.status === ReviewStatus.PUBLISHED
-        ) {
-          await this.reviewStatsService.adjustPhotoReviewCount(
-            review.barId,
-            1,
-            manager,
-          );
-        }
-
-        return photos;
-      });
-    } catch (error: any) {
-      if (error?.code === '23505') {
-        throw new ConflictException('Photo sort order conflict. Please retry.');
-      }
-      throw error;
-    }
-  }
-
-  /**
-   * 리뷰 사진을 삭제한다 (soft delete).
-   */
-  async removePhoto(
-    reviewId: number,
-    photoId: number,
-    user: { id: number },
-  ): Promise<void> {
-    const review = await this.reviewRepository.findOne({
-      where: { id: reviewId },
-    });
-
-    if (!review) {
-      throw new NotFoundException('Review not found.');
-    }
-
-    if (review.userId !== user.id) {
-      throw new ForbiddenException('You can only delete photos from your own review.');
-    }
-
-    const photo = await this.reviewPhotoRepository.findOne({
-      where: { id: photoId, reviewId },
-    });
-
-    if (!photo) {
-      throw new NotFoundException('Photo not found.');
-    }
-
-    await runInTransaction(this.dataSource, async (manager) => {
-      await manager.softRemove(photo);
-
-      review.photoCount = Math.max(0, review.photoCount - 1);
-      await manager.save(review);
-
-      if (review.photoCount === 0 && review.status === ReviewStatus.PUBLISHED) {
-        await this.reviewStatsService.adjustPhotoReviewCount(
-          review.barId,
-          -1,
           manager,
         );
       }

@@ -13,6 +13,7 @@ import { AdminService } from '../admin/admin.service.js';
 import { runInTransaction } from '../common/utils/transaction.js';
 import { ReviewStatus, ReportStatus, ReportResolution } from '@my-project/shared';
 import { CreateReportDto } from './dto/create-report.dto.js';
+import { buildPaginationMeta } from '../common/utils/pagination.js';
 import { ListReportsQueryDto } from './dto/list-reports-query.dto.js';
 
 /**
@@ -115,12 +116,7 @@ export class ReviewReportsService {
 
     return {
       items,
-      meta: {
-        page,
-        limit,
-        totalItems,
-        totalPages: Math.ceil(totalItems / limit),
-      },
+      meta: buildPaginationMeta(page, limit, totalItems),
     };
   }
 

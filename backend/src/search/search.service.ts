@@ -7,34 +7,21 @@ import { Bookmark } from '../entities/bookmark.entity.js';
 import { BarStatus, SearchSortBy } from '@my-project/shared';
 import { SearchBarsDto } from './dto/search-bars.dto.js';
 import { extractThumbnail } from '../common/utils/photo-utils.js';
+import type { SearchItem, SearchResult } from './search.types.js';
+import { mapSearchRow } from './search.mapper.js';
 
-/** 검색 모드 */
-type SearchMode = 'address' | 'name' | 'combined' | 'general';
+/** pg_trgm similarity 일치 임계값 */
+const SEARCH_SIMILARITY_THRESHOLD = 0.2;
 
-interface SearchItem {
-  id: number;
-  name: string;
-  address: string;
-  city: string;
-  country: string;
-  latitude: number;
-  longitude: number;
-  thumbnail: string | null;
-  bookmarkCount: number;
-  isBookmarked: boolean;
-  averageRating: number;
-  reviewCount: number;
-  distanceKm?: number;
-  similarityScore?: number;
-}
+/** 3개 raw-SQL 검색 메서드 공통 SELECT 컬럼 */
+const COMMON_SELECT = `b.id, b.name, b.address, b.city, b.country, b.latitude, b.longitude,
+        (SELECT bp.url FROM bar_photos bp WHERE bp."barId" = b.id AND bp."deletedAt" IS NULL ORDER BY bp."order" ASC LIMIT 1) AS thumbnail,
+        (SELECT COUNT(*)::int FROM bookmarks bm WHERE bm."barId" = b.id AND bm."deletedAt" IS NULL) AS "bookmarkCount",`;
 
-export interface SearchResult {
-  items: SearchItem[];
-  hasMore: boolean;
-  mode: SearchMode;
-  center?: { lat: number; lng: number };
-  radiusKm?: number;
-}
+/** 공통 FROM + JOIN + WHERE (approved & not deleted) */
+const COMMON_FROM = `FROM bars b
+      LEFT JOIN bar_review_stats brs ON brs."barId" = b.id
+      WHERE b.status = 'APPROVED' AND b."deletedAt" IS NULL`;
 
 /**
  * 바 검색 서비스. 3가지 모드를 지원한다:
@@ -73,6 +60,18 @@ export class SearchService {
   }
 
   /**
+   * isBookmarked CASE 절을 생성한다.
+   */
+  private buildIsBookmarkedClause(userIdIdx: number): string {
+    return `CASE WHEN $${userIdIdx}::int IS NOT NULL
+          THEN EXISTS(SELECT 1 FROM bookmarks bm WHERE bm."barId" = b.id AND bm."userId" = $${userIdIdx}::int AND bm."deletedAt" IS NULL)
+          ELSE false
+        END AS "isBookmarked",
+        COALESCE(brs."ratingAvg", 0)::float AS "averageRating",
+        COALESCE(brs."reviewCount", 0)::int AS "reviewCount"`;
+  }
+
+  /**
    * Mode 1: 주소만 검색. 지정 좌표 근처 바를 거리순으로 반환한다.
    */
   private async searchByAddress(dto: SearchBarsDto, userId?: number): Promise<SearchResult> {
@@ -82,24 +81,15 @@ export class SearchService {
     const userIdIdx = 6;
 
     const rows: SearchItem[] = await this.barRepository.query(
-      `SELECT b.id, b.name, b.address, b.city, b.country, b.latitude, b.longitude,
+      `SELECT ${COMMON_SELECT}
         ROUND(CAST(
           ST_Distance(
             b.location,
             ST_SetSRID(ST_MakePoint($2, $1), 4326)::geography
           ) / 1000 AS numeric
         ), 1) AS "distanceKm",
-        (SELECT bp.url FROM bar_photos bp WHERE bp."barId" = b.id AND bp."deletedAt" IS NULL ORDER BY bp."order" ASC LIMIT 1) AS thumbnail,
-        (SELECT COUNT(*)::int FROM bookmarks bm WHERE bm."barId" = b.id AND bm."deletedAt" IS NULL) AS "bookmarkCount",
-        CASE WHEN $${userIdIdx}::int IS NOT NULL
-          THEN EXISTS(SELECT 1 FROM bookmarks bm WHERE bm."barId" = b.id AND bm."userId" = $${userIdIdx}::int AND bm."deletedAt" IS NULL)
-          ELSE false
-        END AS "isBookmarked",
-        COALESCE(brs."ratingAvg", 0)::float AS "averageRating",
-        COALESCE(brs."reviewCount", 0)::int AS "reviewCount"
-      FROM bars b
-      LEFT JOIN bar_review_stats brs ON brs."barId" = b.id
-      WHERE b.status = 'APPROVED' AND b."deletedAt" IS NULL
+        ${this.buildIsBookmarkedClause(userIdIdx)}
+      ${COMMON_FROM}
         AND ST_DWithin(
           b.location,
           ST_SetSRID(ST_MakePoint($2, $1), 4326)::geography,
@@ -111,7 +101,7 @@ export class SearchService {
     );
 
     const hasMore = rows.length > limit;
-    const items = rows.slice(0, limit).map(this.mapRow);
+    const items = rows.slice(0, limit).map(mapSearchRow);
 
     return {
       items,
@@ -152,28 +142,19 @@ export class SearchService {
       : `ORDER BY "similarityScore" DESC`;
 
     const rows: SearchItem[] = await this.barRepository.query(
-      `SELECT b.id, b.name, b.address, b.city, b.country, b.latitude, b.longitude,
+      `SELECT ${COMMON_SELECT}
         similarity(b.name, $1) AS "similarityScore",
         ${distanceSelect}
-        (SELECT bp.url FROM bar_photos bp WHERE bp."barId" = b.id AND bp."deletedAt" IS NULL ORDER BY bp."order" ASC LIMIT 1) AS thumbnail,
-        (SELECT COUNT(*)::int FROM bookmarks bm WHERE bm."barId" = b.id AND bm."deletedAt" IS NULL) AS "bookmarkCount",
-        CASE WHEN $${userIdIdx}::int IS NOT NULL
-          THEN EXISTS(SELECT 1 FROM bookmarks bm WHERE bm."barId" = b.id AND bm."userId" = $${userIdIdx}::int AND bm."deletedAt" IS NULL)
-          ELSE false
-        END AS "isBookmarked",
-        COALESCE(brs."ratingAvg", 0)::float AS "averageRating",
-        COALESCE(brs."reviewCount", 0)::int AS "reviewCount"
-      FROM bars b
-      LEFT JOIN bar_review_stats brs ON brs."barId" = b.id
-      WHERE b.status = 'APPROVED' AND b."deletedAt" IS NULL
-        AND similarity(b.name, $1) > 0.2
+        ${this.buildIsBookmarkedClause(userIdIdx)}
+      ${COMMON_FROM}
+        AND similarity(b.name, $1) > ${SEARCH_SIMILARITY_THRESHOLD}
       ${orderClause}
       LIMIT $${limitIdx} OFFSET $${offsetIdx}`,
       params,
     );
 
     const hasMore = rows.length > limit;
-    const items = rows.slice(0, limit).map(this.mapRow);
+    const items = rows.slice(0, limit).map(mapSearchRow);
 
     return {
       items,
@@ -193,7 +174,7 @@ export class SearchService {
     const userIdIdx = 5;
 
     const rows: SearchItem[] = await this.barRepository.query(
-      `SELECT b.id, b.name, b.address, b.city, b.country, b.latitude, b.longitude,
+      `SELECT ${COMMON_SELECT}
         similarity(b.name, $1) AS "similarityScore",
         ROUND(CAST(
           ST_Distance(
@@ -201,30 +182,21 @@ export class SearchService {
             ST_SetSRID(ST_MakePoint($3, $2), 4326)::geography
           ) / 1000 AS numeric
         ), 1) AS "distanceKm",
-        (SELECT bp.url FROM bar_photos bp WHERE bp."barId" = b.id AND bp."deletedAt" IS NULL ORDER BY bp."order" ASC LIMIT 1) AS thumbnail,
-        (SELECT COUNT(*)::int FROM bookmarks bm WHERE bm."barId" = b.id AND bm."deletedAt" IS NULL) AS "bookmarkCount",
-        CASE WHEN $${userIdIdx}::int IS NOT NULL
-          THEN EXISTS(SELECT 1 FROM bookmarks bm WHERE bm."barId" = b.id AND bm."userId" = $${userIdIdx}::int AND bm."deletedAt" IS NULL)
-          ELSE false
-        END AS "isBookmarked",
-        COALESCE(brs."ratingAvg", 0)::float AS "averageRating",
-        COALESCE(brs."reviewCount", 0)::int AS "reviewCount"
-      FROM bars b
-      LEFT JOIN bar_review_stats brs ON brs."barId" = b.id
-      WHERE b.status = 'APPROVED' AND b."deletedAt" IS NULL
+        ${this.buildIsBookmarkedClause(userIdIdx)}
+      ${COMMON_FROM}
         AND ST_DWithin(
           b.location,
           ST_SetSRID(ST_MakePoint($3, $2), 4326)::geography,
           $4
         )
-        AND similarity(b.name, $1) > 0.2
+        AND similarity(b.name, $1) > ${SEARCH_SIMILARITY_THRESHOLD}
       ORDER BY "similarityScore" DESC, "distanceKm" ASC
       LIMIT $6 OFFSET $7`,
       params,
     );
 
     const hasMore = rows.length > limit;
-    const items = rows.slice(0, limit).map(this.mapRow);
+    const items = rows.slice(0, limit).map(mapSearchRow);
 
     return {
       items,
@@ -321,26 +293,6 @@ export class SearchService {
       items: mappedItems,
       hasMore: totalItems > offset + limit,
       mode: 'general',
-    };
-  }
-
-  /** raw query 결과를 SearchItem으로 정규화한다 */
-  private mapRow(row: SearchItem): SearchItem {
-    return {
-      id: row.id,
-      name: row.name,
-      address: row.address,
-      city: row.city,
-      country: row.country,
-      latitude: row.latitude,
-      longitude: row.longitude,
-      thumbnail: row.thumbnail,
-      bookmarkCount: Number(row.bookmarkCount) || 0,
-      isBookmarked: Boolean(row.isBookmarked),
-      averageRating: Number(row.averageRating) || 0,
-      reviewCount: Number(row.reviewCount) || 0,
-      ...(row.distanceKm != null ? { distanceKm: Number(row.distanceKm) } : {}),
-      ...(row.similarityScore != null ? { similarityScore: Number(row.similarityScore) } : {}),
     };
   }
 }

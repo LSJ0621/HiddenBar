@@ -15,6 +15,7 @@ import {
 } from '@nestjs/common';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { ReviewsService } from './reviews.service.js';
+import { ReviewPhotosService } from './review-photos.service.js';
 import { CurrentUser } from '../auth/decorators/current-user.decorator.js';
 import { MULTER_OPTIONS } from '../common/config/multer.config.js';
 import { ImageValidationPipe } from '../common/pipes/file-validation.pipe.js';
@@ -25,7 +26,10 @@ import { Role } from '@my-project/shared';
 
 @Controller()
 export class ReviewsController {
-  constructor(private readonly reviewsService: ReviewsService) {}
+  constructor(
+    private readonly reviewsService: ReviewsService,
+    private readonly reviewPhotosService: ReviewPhotosService,
+  ) {}
 
   /**
    * 리뷰를 생성한다.
@@ -95,7 +99,7 @@ export class ReviewsController {
     @UploadedFiles(ImageValidationPipe) files: Express.Multer.File[],
     @CurrentUser() user: { id: number },
   ) {
-    return this.reviewsService.uploadPhotos(reviewId, files || [], user);
+    return this.reviewPhotosService.uploadPhotos(reviewId, files || [], user);
   }
 
   /**
@@ -108,6 +112,6 @@ export class ReviewsController {
     @Param('photoId', ParseIntPipe) photoId: number,
     @CurrentUser() user: { id: number },
   ) {
-    await this.reviewsService.removePhoto(reviewId, photoId, user);
+    await this.reviewPhotosService.removePhoto(reviewId, photoId, user);
   }
 }

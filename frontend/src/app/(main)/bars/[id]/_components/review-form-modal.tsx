@@ -3,14 +3,10 @@
 import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { standardSchemaResolver } from '@hookform/resolvers/standard-schema';
-import { format, parseISO } from 'date-fns';
-import { CalendarIcon, Loader2, X } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 
-import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { Calendar } from '@/components/ui/calendar';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import {
   Dialog,
   DialogContent,
@@ -27,24 +23,13 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet';
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form';
-import { Textarea } from '@/components/ui/textarea';
-import { StarRating } from '@/components/ui/star-rating';
-import { PhotoUploader } from '@/components/bars/photo-uploader';
 import { useMediaQuery } from '@/hooks/use-media-query';
 import api from '@/lib/api';
 import { API_ENDPOINTS } from '@/lib/api-endpoints';
 import { useCreateReview, useUpdateReview, useUploadReviewPhotos, useDeleteReviewPhoto } from '@/hooks/queries/use-reviews';
 import { reviewSchema, type ReviewFormValues } from '@/lib/validations/review-schema';
-import { MAX_REVIEW_CONTENT_LENGTH } from '@/lib/constants';
 import type { ReviewItem } from '@/types/review';
+import { ReviewFormFields } from './review-form-fields';
 
 interface ReviewFormModalProps {
   open: boolean;
@@ -102,6 +87,7 @@ export function ReviewFormModal({
     deletePhoto.mutate(photoId);
   };
 
+  /** 폼 제출 핸들러 — 신규 작성 및 수정 모두 처리 */
   const onSubmit = async (values: ReviewFormValues) => {
     try {
       if (isEditing) {
@@ -154,121 +140,16 @@ export function ReviewFormModal({
     ? 'Update your review for this bar.'
     : 'Share your experience at this bar.';
 
-  const formContent = (isMobile = false) => (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className={cn('space-y-6', isMobile && 'space-y-4')}>
-        <FormField
-          control={form.control}
-          name="rating"
-          render={({ field }) => (
-            <FormItem className={cn(isMobile && 'space-y-1')}>
-              <FormLabel>Rating</FormLabel>
-              <FormControl>
-                <StarRating
-                  value={field.value}
-                  onChange={field.onChange}
-                  size={isMobile ? 'md' : 'lg'}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="content"
-          render={({ field }) => (
-            <FormItem className={cn(isMobile && 'space-y-1')}>
-              <FormLabel>Review</FormLabel>
-              <FormControl>
-                <Textarea
-                  {...field}
-                  placeholder="How was your experience?"
-                  rows={isMobile ? 3 : 4}
-                  maxLength={MAX_REVIEW_CONTENT_LENGTH}
-                  className={cn(isMobile && 'text-sm')}
-                />
-              </FormControl>
-              <div className="flex justify-between">
-                <FormMessage />
-                <span className="text-xs text-muted-foreground">
-                  {field.value?.length ?? 0}/{MAX_REVIEW_CONTENT_LENGTH}
-                </span>
-              </div>
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="visitedAt"
-          render={({ field }) => {
-            const selectedDate = field.value ? parseISO(field.value) : undefined;
-
-            return (
-              <FormItem className={cn(isMobile && 'space-y-1')}>
-                <FormLabel>Visit Date (optional)</FormLabel>
-                <div className="flex items-center gap-2">
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <FormControl>
-                        <Button
-                          variant="outline"
-                          className={cn(
-                            'w-full justify-start text-left font-normal',
-                            !field.value && 'text-muted-foreground',
-                          )}
-                        >
-                          <CalendarIcon className="size-4 text-muted-foreground" />
-                          {selectedDate
-                            ? format(selectedDate, 'MMM d, yyyy')
-                            : 'Pick a date'}
-                        </Button>
-                      </FormControl>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={selectedDate}
-                        onSelect={(date) => {
-                          field.onChange(date ? format(date, 'yyyy-MM-dd') : '');
-                        }}
-                        disabled={{ after: new Date() }}
-                        defaultMonth={selectedDate}
-                      />
-                    </PopoverContent>
-                  </Popover>
-                  {field.value && (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="size-8 shrink-0"
-                      onClick={() => field.onChange('')}
-                    >
-                      <X className="size-4" />
-                    </Button>
-                  )}
-                </div>
-                <FormMessage />
-              </FormItem>
-            );
-          }}
-        />
-
-        <div className={cn('space-y-2', isMobile && 'space-y-1.5')}>
-          <label className="text-sm font-medium">Photos (optional)</label>
-          <PhotoUploader
-            files={newFiles}
-            onFilesChange={setNewFiles}
-            existingPhotos={isEditing ? existingPhotos : []}
-            onDeleteExisting={isEditing ? handleDeleteExisting : undefined}
-          />
-        </div>
-      </form>
-    </Form>
-  );
+  /** 공통 폼 필드 props */
+  const fieldProps = {
+    form,
+    newFiles,
+    onFilesChange: setNewFiles,
+    isEditing,
+    existingPhotos,
+    onDeleteExisting: handleDeleteExisting,
+    onSubmit,
+  };
 
   const footer = (
     <>
@@ -290,7 +171,7 @@ export function ReviewFormModal({
             <DialogTitle>{title}</DialogTitle>
             <DialogDescription>{description}</DialogDescription>
           </DialogHeader>
-          {formContent(false)}
+          <ReviewFormFields {...fieldProps} isMobile={false} />
           <DialogFooter>{footer}</DialogFooter>
         </DialogContent>
       </Dialog>
@@ -315,7 +196,7 @@ export function ReviewFormModal({
         </SheetHeader>
 
         <div className="flex-1 overflow-y-auto px-5 pb-2 scrollbar-none [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          {formContent(true)}
+          <ReviewFormFields {...fieldProps} isMobile={true} />
         </div>
 
         <SheetFooter className="flex-row gap-3 border-t border-border px-5 py-3">

@@ -6,6 +6,11 @@ import {
   ForbiddenException,
 } from '@nestjs/common';
 import { AdminService } from './admin.service.js';
+import { AdminDashboardService } from './admin-dashboard.service.js';
+import { AdminBarsService } from './admin-bars.service.js';
+import { AdminUsersService } from './admin-users.service.js';
+import { AdminReviewsService } from './admin-reviews.service.js';
+import { AdminActionsService } from './admin-actions.service.js';
 import { Bar } from '../entities/bar.entity.js';
 import { User } from '../entities/user.entity.js';
 import { Bookmark } from '../entities/bookmark.entity.js';
@@ -13,6 +18,7 @@ import { RefreshToken } from '../entities/refresh-token.entity.js';
 import { AdminAction } from '../entities/admin-action.entity.js';
 import { Review } from '../entities/review.entity.js';
 import { ReviewStatsService } from '../reviews/review-stats.service.js';
+import { BarsService } from '../bars/bars.service.js';
 import {
   BarStatus,
   Role,
@@ -61,6 +67,10 @@ const mockReviewStatsService = () => ({
   recalculate: jest.fn(),
 });
 
+const mockBarsService = () => ({
+  softDeleteBarWithRelations: jest.fn().mockResolvedValue(undefined),
+});
+
 const mockDataSource = () => ({
   createQueryRunner: jest.fn().mockReturnValue({
     connect: jest.fn(),
@@ -87,7 +97,6 @@ describe('AdminService', () => {
   let barRepo: ReturnType<typeof mockBarRepository>;
   let userRepo: ReturnType<typeof mockUserRepository>;
   let bookmarkRepo: ReturnType<typeof mockBookmarkRepository>;
-  let refreshTokenRepo: ReturnType<typeof mockRefreshTokenRepository>;
   let adminActionRepo: ReturnType<typeof mockAdminActionRepository>;
   let dataSource: ReturnType<typeof mockDataSource>;
 
@@ -117,6 +126,11 @@ describe('AdminService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         AdminService,
+        AdminDashboardService,
+        AdminBarsService,
+        AdminUsersService,
+        AdminReviewsService,
+        AdminActionsService,
         { provide: getRepositoryToken(Bar), useFactory: mockBarRepository },
         { provide: getRepositoryToken(User), useFactory: mockUserRepository },
         {
@@ -125,7 +139,7 @@ describe('AdminService', () => {
         },
         {
           provide: getRepositoryToken(RefreshToken),
-          useFactory: mockRefreshTokenRepository,
+          useFactory: () => ({ delete: jest.fn() }),
         },
         {
           provide: getRepositoryToken(AdminAction),
@@ -139,6 +153,10 @@ describe('AdminService', () => {
           provide: ReviewStatsService,
           useFactory: mockReviewStatsService,
         },
+        {
+          provide: BarsService,
+          useFactory: mockBarsService,
+        },
         { provide: DataSource, useFactory: mockDataSource },
       ],
     }).compile();
@@ -147,7 +165,6 @@ describe('AdminService', () => {
     barRepo = module.get(getRepositoryToken(Bar));
     userRepo = module.get(getRepositoryToken(User));
     bookmarkRepo = module.get(getRepositoryToken(Bookmark));
-    refreshTokenRepo = module.get(getRepositoryToken(RefreshToken));
     adminActionRepo = module.get(getRepositoryToken(AdminAction));
     dataSource = module.get(DataSource);
   });
@@ -558,7 +575,6 @@ describe('AdminService', () => {
 
       await service.deleteBar(1, mockAdmin.id, 'Spam listing');
 
-      expect(qr.manager.softRemove).toHaveBeenCalledWith(barEntity);
       expect(qr.commitTransaction).toHaveBeenCalled();
     });
 

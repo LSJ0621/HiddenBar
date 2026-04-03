@@ -2,9 +2,8 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { toast } from 'sonner';
-import { AxiosError } from 'axios';
 import { ArrowLeft } from 'lucide-react';
+import { showErrorToast } from '@/lib/error-utils';
 import {
   useAdminReviewReportDetail,
   useResolveReviewReport,
@@ -55,9 +54,7 @@ export function ReportDetailContent({ reportId }: ReportDetailContentProps) {
       });
       router.push('/admin/review-reports');
     } catch (error) {
-      if (error instanceof AxiosError) {
-        toast.error(error.response?.data?.message ?? 'Failed to resolve report');
-      }
+      showErrorToast(error, 'Failed to resolve report');
     }
   };
 

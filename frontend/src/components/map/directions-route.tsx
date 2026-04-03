@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef } from 'react';
 import { useMap } from '@vis.gl/react-google-maps';
 import type { DirectionsStep } from '@/types/bar';
+import type { LatLng } from '@/types';
 
 interface DirectionsRouteProps {
   encodedPolyline: string;
@@ -11,8 +12,8 @@ interface DirectionsRouteProps {
 /**
  * Decode a Google Maps encoded polyline string into an array of LatLng points.
  */
-function decodePolyline(encoded: string): { lat: number; lng: number }[] {
-  const points: { lat: number; lng: number }[] = [];
+function decodePolyline(encoded: string): LatLng[] {
+  const points: LatLng[] = [];
   let index = 0;
   let lat = 0;
   let lng = 0;
@@ -99,7 +100,7 @@ export function TransitDirectionsRoute({ steps }: TransitDirectionsRouteProps) {
 
   const segments = useMemo(() => {
     const result: Array<{
-      path: { lat: number; lng: number }[];
+      path: LatLng[];
       color: string;
       isWalk: boolean;
     }> = [];

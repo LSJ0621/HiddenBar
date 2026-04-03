@@ -1,14 +1,12 @@
 'use client';
 
-import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
-import { z } from 'zod/v4';
 import { standardSchemaResolver } from '@hookform/resolvers/standard-schema';
-import { ArrowLeft, Eye, EyeOff, Loader2 } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
-import { AxiosError } from 'axios';
 
+import { showErrorToast } from '@/lib/error-utils';
 import {
   useProfile,
   useUpdateProfile,
@@ -16,49 +14,16 @@ import {
   useUploadProfileImage,
 } from '@/hooks/queries/use-profile';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ProfileImageUploader } from './profile-image-uploader';
+import { updateProfileSchema, changePasswordSchema, UpdateProfileValues, ChangePasswordValues } from './profile-edit-schema';
+import { ProfileBasicInfoForm } from './profile-basic-info-form';
+import { ProfileChangePasswordForm } from './profile-change-password-form';
 
-const updateProfileSchema = z.object({
-  name: z.string().min(2, 'Name must be at least 2 characters').max(30, 'Name must be 30 characters or less'),
-});
-
-type UpdateProfileValues = z.infer<typeof updateProfileSchema>;
-
-const changePasswordSchema = z
-  .object({
-    currentPassword: z.string().min(1, 'Please enter your current password'),
-    newPassword: z
-      .string()
-      .min(8, 'Password must be at least 8 characters')
-      .regex(/[a-zA-Z]/, 'Must contain a letter')
-      .regex(/[0-9]/, 'Must contain a number'),
-    confirmNewPassword: z.string().min(1, 'Please confirm your new password'),
-  })
-  .refine((data) => data.newPassword === data.confirmNewPassword, {
-    message: 'New passwords do not match',
-    path: ['confirmNewPassword'],
-  });
-
-type ChangePasswordValues = z.infer<typeof changePasswordSchema>;
-
-/** Profile edit page with profile info section and password change section */
+/**
+ * 프로필 수정 페이지의 메인 컨텐츠 컴포넌트.
+ * 로딩 상태 처리, 데이터 페칭, 기본 정보/비밀번호 변경 섹션 조합을 담당한다.
+ */
 export function ProfileEditContent() {
   const router = useRouter();
   const { data: user, isLoading } = useProfile();
@@ -66,12 +31,7 @@ export function ProfileEditContent() {
   const changePassword = useChangePassword();
   const uploadProfileImage = useUploadProfileImage();
 
-  const [showCurrentPw, setShowCurrentPw] = useState(false);
-  const [showNewPw, setShowNewPw] = useState(false);
-  const [showConfirmPw, setShowConfirmPw] = useState(false);
-
   const profileForm = useForm<UpdateProfileValues>({
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     resolver: standardSchemaResolver(updateProfileSchema),
     values: {
       name: user?.name ?? '',
@@ -79,7 +39,6 @@ export function ProfileEditContent() {
   });
 
   const passwordForm = useForm<ChangePasswordValues>({
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     resolver: standardSchemaResolver(changePasswordSchema),
     defaultValues: {
       currentPassword: '',
@@ -88,33 +47,28 @@ export function ProfileEditContent() {
     },
   });
 
+  /** 프로필 이미지 선택 시 업로드를 처리하는 핸들러 */
   const handleImageSelect = async (file: File) => {
     try {
       await uploadProfileImage.mutateAsync(file);
       toast.success('Profile image updated');
     } catch (error) {
-      if (error instanceof AxiosError) {
-        toast.error(error.response?.data?.message ?? 'Failed to upload image');
-      } else {
-        toast.error('Failed to upload image');
-      }
+      showErrorToast(error, 'Failed to upload image');
     }
   };
 
+  /** 프로필 기본 정보 폼 제출 핸들러 */
   const onProfileSubmit = async (values: UpdateProfileValues) => {
     try {
       await updateProfile.mutateAsync({ name: values.name });
       toast.success('Profile updated');
       router.push('/profile');
     } catch (error) {
-      if (error instanceof AxiosError) {
-        toast.error(error.response?.data?.message ?? 'Failed to update profile');
-      } else {
-        toast.error('Failed to update profile');
-      }
+      showErrorToast(error, 'Failed to update profile');
     }
   };
 
+  /** 비밀번호 변경 폼 제출 핸들러 */
   const onPasswordSubmit = async (values: ChangePasswordValues) => {
     try {
       await changePassword.mutateAsync({
@@ -124,11 +78,7 @@ export function ProfileEditContent() {
       toast.success('Password changed');
       passwordForm.reset();
     } catch (error) {
-      if (error instanceof AxiosError) {
-        toast.error(error.response?.data?.message ?? 'Failed to change password');
-      } else {
-        toast.error('Failed to change password');
-      }
+      showErrorToast(error, 'Failed to change password');
     }
   };
 
@@ -153,7 +103,7 @@ export function ProfileEditContent() {
 
   return (
     <div className="container mx-auto max-w-lg space-y-6 px-4 py-8">
-      {/* Header with back button */}
+      {/* 뒤로 가기 버튼이 포함된 헤더 */}
       <div className="flex items-center gap-2">
         <Button
           variant="ghost"
@@ -167,172 +117,20 @@ export function ProfileEditContent() {
         <h1 className="font-display text-xl font-semibold tracking-tight">Edit Profile</h1>
       </div>
 
-      {/* Profile Section */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Basic Info</CardTitle>
-          <CardDescription>You can change your name and profile image</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Form {...profileForm}>
-            <form onSubmit={profileForm.handleSubmit(onProfileSubmit)}>
-              <fieldset disabled={profileForm.formState.isSubmitting} className="space-y-4 disabled:opacity-60">
-                <ProfileImageUploader
-                  currentImageUrl={user.profileImage}
-                  onFileSelect={handleImageSelect}
-                  isUploading={uploadProfileImage.isPending}
-                />
+      <ProfileBasicInfoForm
+        form={profileForm}
+        currentImageUrl={user.profileImage}
+        onImageSelect={handleImageSelect}
+        isUploading={uploadProfileImage.isPending}
+        onSubmit={onProfileSubmit}
+      />
 
-                <FormField
-                  control={profileForm.control}
-                  name="name"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Name</FormLabel>
-                      <FormControl>
-                        <Input
-                          data-testid="profile-name-input"
-                          placeholder="Enter your name"
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <Button
-                  type="submit"
-                  data-testid="profile-save-button"
-                  disabled={profileForm.formState.isSubmitting}
-                >
-                  {profileForm.formState.isSubmitting && (
-                    <Loader2 className="size-4 animate-spin" />
-                  )}
-                  Save
-                </Button>
-              </fieldset>
-            </form>
-          </Form>
-        </CardContent>
-      </Card>
-
-      {/* Password Section — hidden for OAuth users without password */}
+      {/* OAuth 등 비밀번호가 없는 사용자에게는 숨김 */}
       {user.hasPassword && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Change Password</CardTitle>
-            <CardDescription>You can set a new password</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Form {...passwordForm}>
-              <form onSubmit={passwordForm.handleSubmit(onPasswordSubmit)}>
-                <fieldset disabled={passwordForm.formState.isSubmitting} className="space-y-4 disabled:opacity-60">
-                  <FormField
-                    control={passwordForm.control}
-                    name="currentPassword"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Current Password</FormLabel>
-                        <FormControl>
-                          <div className="relative">
-                            <Input
-                              type={showCurrentPw ? 'text' : 'password'}
-                              data-testid="password-current-input"
-                              placeholder="Enter current password"
-                              className="pr-10"
-                              {...field}
-                            />
-                            <button
-                              type="button"
-                              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                              onClick={() => setShowCurrentPw((prev) => !prev)}
-                              aria-label={showCurrentPw ? 'Hide password' : 'Show password'}
-                            >
-                              {showCurrentPw ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
-                            </button>
-                          </div>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={passwordForm.control}
-                    name="newPassword"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>New Password</FormLabel>
-                        <FormControl>
-                          <div className="relative">
-                            <Input
-                              type={showNewPw ? 'text' : 'password'}
-                              data-testid="password-new-input"
-                              placeholder="Enter new password"
-                              className="pr-10"
-                              {...field}
-                            />
-                            <button
-                              type="button"
-                              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                              onClick={() => setShowNewPw((prev) => !prev)}
-                              aria-label={showNewPw ? 'Hide password' : 'Show password'}
-                            >
-                              {showNewPw ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
-                            </button>
-                          </div>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={passwordForm.control}
-                    name="confirmNewPassword"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Confirm New Password</FormLabel>
-                        <FormControl>
-                          <div className="relative">
-                            <Input
-                              type={showConfirmPw ? 'text' : 'password'}
-                              data-testid="password-confirm-input"
-                              placeholder="Re-enter new password"
-                              className="pr-10"
-                              {...field}
-                            />
-                            <button
-                              type="button"
-                              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                              onClick={() => setShowConfirmPw((prev) => !prev)}
-                              aria-label={showConfirmPw ? 'Hide password' : 'Show password'}
-                            >
-                              {showConfirmPw ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
-                            </button>
-                          </div>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <Button
-                    type="submit"
-                    data-testid="password-change-button"
-                    disabled={passwordForm.formState.isSubmitting}
-                  >
-                    {passwordForm.formState.isSubmitting && (
-                      <Loader2 className="size-4 animate-spin" />
-                    )}
-                    Change Password
-                  </Button>
-                </fieldset>
-              </form>
-            </Form>
-          </CardContent>
-        </Card>
+        <ProfileChangePasswordForm
+          form={passwordForm}
+          onSubmit={onPasswordSubmit}
+        />
       )}
     </div>
   );

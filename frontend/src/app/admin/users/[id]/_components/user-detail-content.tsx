@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { AxiosError } from 'axios';
 import { ArrowLeft, Ban, CheckCircle, Shield } from 'lucide-react';
+import { showErrorToast } from '@/lib/error-utils';
 import {
   useAdminUserDetail,
   useSuspendUser,
@@ -49,12 +50,10 @@ export function UserDetailContent({ params }: UserDetailContentProps) {
       await suspendUser.mutateAsync({ id, reason });
       toast.success('User has been suspended');
     } catch (error) {
-      if (error instanceof AxiosError) {
-        if (error.response?.status === 403) {
-          toast.error('You cannot modify your own permissions');
-        } else {
-          toast.error(error.response?.data?.message ?? 'Failed to suspend');
-        }
+      if (error instanceof AxiosError && error.response?.status === 403) {
+        toast.error('You cannot modify your own permissions');
+      } else {
+        showErrorToast(error, 'Failed to suspend');
       }
     }
   };
@@ -64,12 +63,10 @@ export function UserDetailContent({ params }: UserDetailContentProps) {
       await activateUser.mutateAsync({ id });
       toast.success('User has been activated');
     } catch (error) {
-      if (error instanceof AxiosError) {
-        if (error.response?.status === 403) {
-          toast.error('You cannot modify your own permissions');
-        } else {
-          toast.error(error.response?.data?.message ?? 'Failed to activate');
-        }
+      if (error instanceof AxiosError && error.response?.status === 403) {
+        toast.error('You cannot modify your own permissions');
+      } else {
+        showErrorToast(error, 'Failed to activate');
       }
     }
   };
@@ -79,12 +76,10 @@ export function UserDetailContent({ params }: UserDetailContentProps) {
       await changeUserRole.mutateAsync({ id, role, reason: reason || undefined });
       toast.success('Role has been changed');
     } catch (error) {
-      if (error instanceof AxiosError) {
-        if (error.response?.status === 403) {
-          toast.error('You cannot modify your own permissions');
-        } else {
-          toast.error(error.response?.data?.message ?? 'Failed to change role');
-        }
+      if (error instanceof AxiosError && error.response?.status === 403) {
+        toast.error('You cannot modify your own permissions');
+      } else {
+        showErrorToast(error, 'Failed to change role');
       }
     }
   };

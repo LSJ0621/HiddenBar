@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { AxiosError } from 'axios';
 import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { showErrorToast } from '@/lib/error-utils';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -72,7 +73,7 @@ export function ReviewReportDialog({
         toast.error('You have already reported this review');
         onOpenChange(false);
       } else {
-        toast.error('Report submission failed. Please try again.');
+        showErrorToast(error, 'Report submission failed. Please try again.');
       }
     }
   };

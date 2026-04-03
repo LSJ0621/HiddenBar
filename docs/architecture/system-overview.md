@@ -175,6 +175,8 @@ backend/src/
 │   ├── search.controller.spec.ts
 │   ├── search.service.ts
 │   ├── search.service.spec.ts
+│   ├── search.types.ts             # SearchMode, SearchItem, SearchResult 인터페이스
+│   ├── search.mapper.ts            # mapSearchRow() 검색 결과 매핑 함수
 │   └── dto/
 │       └── search-bars.dto.ts
 │
@@ -186,6 +188,8 @@ backend/src/
 │   ├── maps.service.spec.ts
 │   ├── address-search.service.ts    # 주소 검색 (Google Places API v1)
 │   ├── address-search.service.spec.ts
+│   ├── google-routes.types.ts       # Google Routes API v2 요청/응답 인터페이스 (GoogleLatLng, GoogleRoutesResponse 등)
+│   ├── google-routes.constants.ts   # Routes API URL, 타임아웃, 이동수단 매핑, 필드마스크 상수
 │   └── dto/
 │       ├── directions.dto.ts
 │       └── search-address.dto.ts
@@ -213,7 +217,9 @@ backend/src/
 │   ├── reviews.controller.spec.ts
 │   ├── reviews.service.ts
 │   ├── reviews.service.spec.ts
-│   ├── review-stats.service.ts       # 리뷰 통계 갱신 서비스 (incrementStats, decrementStats, adjustRating, adjustPhotoReviewCount)
+│   ├── review-photos.service.ts     # 리뷰 사진 업로드/삭제 서비스 (S3 의존)
+│   ├── review-presenter.ts          # 리뷰 응답 변환 함수 (toReviewItem, toReviewStats)
+│   ├── review-stats.service.ts      # 리뷰 통계 갱신 서비스 (incrementStats, decrementStats, adjustRating, adjustPhotoReviewCount)
 │   └── dto/
 │       ├── create-review.dto.ts
 │       ├── update-review.dto.ts
@@ -235,8 +241,16 @@ backend/src/
 │   ├── admin.module.ts
 │   ├── admin.controller.ts
 │   ├── admin.controller.spec.ts
-│   ├── admin.service.ts
+│   ├── admin.service.ts             # 퍼사드 — 5개 서브 서비스에 위임
 │   ├── admin.service.spec.ts
+│   ├── admin-dashboard.service.ts   # 대시보드 통계, 날짜 헬퍼, 추이 계산
+│   ├── admin-bars.service.ts        # 가게 목록/상세/승인/거절/삭제 (BarsService.softDeleteBarWithRelations 활용)
+│   ├── admin-users.service.ts       # 유저 목록/상세/정지/활성화/역할 변경
+│   ├── admin-reviews.service.ts     # 리뷰 상태 변경/삭제
+│   ├── admin-actions.service.ts     # 감사 로그 조회
+│   ├── admin-action.helper.ts       # AdminAction 생성 헬퍼 (createAdminAction)
+│   ├── admin-target-type.ts         # AdminTargetType enum (BAR, USER, REVIEW)
+│   ├── admin.constants.ts           # 대시보드 매직넘버 상수 (DASHBOARD_RECENT_LIMIT 등)
 │   ├── dto/
 │   │   ├── admin-bars-query.dto.ts
 │   │   ├── admin-users-query.dto.ts
@@ -250,7 +264,11 @@ backend/src/
 │
 ├── seeds/
 │   ├── bar-seed.ts              # 개발용 바 시드 데이터 스크립트 (standalone) — 바, 사진, 영업시간, 메뉴 아이템 삽입
-│   └── bar-seed.data.ts         # 바 시드 데이터 배열 (BarSeedData 인터페이스 + barSeedData export, operatingHours/menuItems 포함)
+│   ├── bar-seed.data.ts         # 바 시드 데이터 집계 — 12개 파트 파일 import 후 barSeedData 배열 export
+│   ├── bar-seed.types.ts        # BarSeedData 인터페이스 정의
+│   ├── bar-seed-part-01.ts      # 시드 데이터 파트 1~12 (100개 바를 12개 파일로 분할)
+│   ├── ...
+│   └── bar-seed-part-12.ts
 │
 ├── templates/
 │   └── email/
@@ -273,6 +291,8 @@ backend/src/
 │   └── user.entity.ts
 │
 ├── common/
+│   ├── constants/
+│   │   └── currency.ts              # 기본 통화 코드 상수 (DEFAULT_CURRENCY)
 │   ├── filters/
 │   │   ├── all-exceptions.filter.ts      # 전역 예외 필터
 │   │   └── all-exceptions.filter.spec.ts
@@ -294,6 +314,7 @@ backend/src/
 │   │   ├── file-validation.util.ts  # Magic bytes 검증 유틸리티 (JPEG/PNG/WebP)
 │   │   ├── user-mapper.ts           # User 엔티티 → UserInfo DTO 변환 (toUserInfo)
 │   │   ├── photo-utils.ts           # 사진 배열에서 썸네일 추출 (extractThumbnail)
+│   │   ├── pagination.ts            # 페이지네이션 메타 빌더 (buildPaginationMeta) — 7개 서비스에서 공통 사용
 │   │   └── transaction.ts           # 트랜잭션 래퍼 유틸리티 (runInTransaction)
 │   ├── pipes/
 │   │   ├── file-validation.pipe.ts  # MIME + magic bytes 검증 파이프 (ImageValidationPipe)
@@ -396,16 +417,16 @@ TypeORM CLI에서 마이그레이션을 실행하려면 별도의 DataSource 설
 |------|-----------|------|
 | **AuthModule** | `auth.controller.ts`, `auth.service.ts`, `auth-password.service.ts`, `cookie.service.ts`, `email-notification.service.ts`, `email-verification.service.ts`, `jwt.strategy.ts`, `clients/google-oauth.client.ts` | 이메일/소셜 회원가입 및 로그인, JWT 발급/갱신/폐기, httpOnly 쿠키 설정/삭제 (CookieService), Passport 전략 관리, Google OAuth 클라이언트 (`@nestjs/axios` 기반), 이메일 인증 코드 발송/검증 (EmailVerificationService + EmailNotificationService), 비밀번호 재설정 (AuthPasswordService), MailerModule (Handlebars 템플릿 기반) |
 | **UsersModule** | `users.controller.ts`, `users.service.ts` | 프로필 조회/수정, 비밀번호 변경, 프로필 이미지 업로드 (S3) |
-| **BarsModule** | `bars.controller.ts`, `bars.service.ts`, `bar-owner.guard.ts` | 가게 CRUD, 소유자 권한 검증, 근처 바 검색 (PostGIS ST_DWithin/ST_Distance). update 시 menuItems/operatingHours 트랜잭션 기반 교체 지원 |
+| **BarsModule** | `bars.controller.ts`, `bars.service.ts`, `bar-owner.guard.ts` | 가게 CRUD, 소유자 권한 검증, 근처 바 검색 (PostGIS ST_DWithin/ST_Distance). update 시 menuItems/operatingHours 트랜잭션 기반 교체 지원. `softDeleteBarWithRelations()` — 바와 연관 엔티티(사진·메뉴·영업시간·리뷰·북마크·통계) 일괄 소프트 삭제 (AdminModule에서도 활용) |
 | **PhotosModule** | `photos.controller.ts`, `photos.service.ts` | S3 사진 업로드/삭제, 파일 검증. 전체 업로드 실패 시 `BadGatewayException` 반환. 프로필 이미지 교체 순서: 새 업로드 → DB 저장 → 기존 삭제 (삭제 실패 시 로그만 기록) |
 | **BookmarksModule** | `bookmarks.controller.ts`, `bookmarks.service.ts` | 북마크 추가(`PUT`, 멱등) / 제거(`DELETE`, 멱등), 내 북마크 목록 조회. 응답에 `isBookmarked`와 `bookmarkCount` 포함 |
-| **SearchModule** | `search.controller.ts`, `search.service.ts` | 3가지 검색 모드 지원: 주소만(address) · 이름만(name) · 주소+이름(combined). 모드는 파라미터 조합(`lat`/`lng`, `name`)으로 자동 판별. pg_trgm `similarity() > 0.2` 기반 퍼지 매칭, PostGIS ST_DWithin 거리 필터. 일반 목록 모드(`sortBy`)로 홈페이지 호환 유지. 응답에 `hasMore`/`mode`/`center`/`radiusKm` 포함 |
+| **SearchModule** | `search.controller.ts`, `search.service.ts`, `search.types.ts`, `search.mapper.ts` | 3가지 검색 모드 지원: 주소만(address) · 이름만(name) · 주소+이름(combined). 모드는 파라미터 조합(`lat`/`lng`, `name`)으로 자동 판별. pg_trgm `similarity() > 0.2` 기반 퍼지 매칭, PostGIS ST_DWithin 거리 필터. 일반 목록 모드(`sortBy`)로 홈페이지 호환 유지. 응답에 `hasMore`/`mode`/`center`/`radiusKm` 포함. 타입 정의(`search.types.ts`)와 결과 매핑(`search.mapper.ts`) 분리 |
 | **MapsModule** | `maps.controller.ts`, `maps.service.ts`, `address-search.service.ts` | Google Routes API v2 프록시 (`@nestjs/axios` HttpService 기반), 경로 계산, 주소 검색 (Google Places API v1), Rate Limiting. 프론트엔드에서 경로 탭(`/directions`)을 통해 호출 (이전: 바 상세 DirectionsSheet) |
 | **GoogleModule** | `external/google/clients/google-places.client.ts` | Google Places API v1 호출 클라이언트 (`@nestjs/axios` HttpService 기반, Autocomplete, Details) |
-| **ReviewsModule** | `reviews.controller.ts`, `reviews.service.ts`, `review-stats.service.ts` | 리뷰 CRUD, 리뷰 사진 업로드/삭제 (S3), bar_review_stats 통계 관리 (ReviewStatsService). 리뷰 생성/삭제/수정 시 트랜잭션 내에서 통계 동기적 갱신 |
+| **ReviewsModule** | `reviews.controller.ts`, `reviews.service.ts`, `review-photos.service.ts`, `review-presenter.ts`, `review-stats.service.ts` | 리뷰 CRUD, bar_review_stats 통계 관리 (ReviewStatsService). 리뷰 사진 업로드/삭제는 ReviewPhotosService로 분리 (S3 의존). 응답 변환은 review-presenter.ts (toReviewItem, toReviewStats). 리뷰 생성/삭제/수정 시 트랜잭션 내에서 통계 동기적 갱신 |
 | **ReviewReportsModule** | `review-reports.controller.ts`, `review-reports.service.ts` | 리뷰 신고 접수 (사용자) 및 신고 관리 (관리자). 신고 목록/상세 조회, 신고 처리 (RESTORED/HIDDEN/DELETED). ReviewsModule, AdminModule 의존 |
-| **AdminModule** | `admin.controller.ts`, `admin.service.ts` | 대시보드 통계, 가게 승인/거절/삭제, 유저 정지/활성화/역할 변경, 감사 로그, 리뷰 상태 변경/삭제 (ReviewsModule 의존) |
-| **Common** | `pagination.dto.ts`, `file-validation.pipe.ts`, `soft-delete-cascade.subscriber.ts`, `all-exceptions.filter.ts`, `configuration.ts`, `admin-init.service.ts`, `trigger-init.service.ts`, `seed-init.service.ts`, Guards, Decorators, `user-mapper.ts`, `photo-utils.ts`, `transaction.ts` | 공통 DTO, 파이프, 가드, 데코레이터, soft delete cascade subscriber, 전역 예외 필터 (AllExceptionsFilter), 환경변수 설정 (ConfigModule), 초기 관리자 계정 생성 (AdminInitService), bars 테이블 DB 트리거 + pg_trgm 확장/인덱스 자동 보장 (TriggerInitService: `ensureSearchVectorTrigger`, `ensureLocationTrigger`, `ensurePgTrgmExtensionAndIndex`), dev 환경 바·사진·영업시간·메뉴 아이템 시드 데이터 자동 삽입 (SeedInitService), 공통 유틸 (toUserInfo, extractThumbnail, runInTransaction) |
+| **AdminModule** | `admin.controller.ts`, `admin.service.ts` (퍼사드), `admin-dashboard.service.ts`, `admin-bars.service.ts`, `admin-users.service.ts`, `admin-reviews.service.ts`, `admin-actions.service.ts`, `admin-action.helper.ts`, `admin-target-type.ts`, `admin.constants.ts` | 퍼사드 패턴 — AdminService가 5개 서브 서비스에 위임. 대시보드 통계 (AdminDashboardService), 가게 승인/거절/삭제 (AdminBarsService, BarsModule 의존), 유저 정지/활성화/역할 변경 (AdminUsersService), 리뷰 상태 변경/삭제 (AdminReviewsService), 감사 로그 (AdminActionsService). 공통 감사 로그 생성 헬퍼 (createAdminAction) |
+| **Common** | `pagination.dto.ts`, `file-validation.pipe.ts`, `soft-delete-cascade.subscriber.ts`, `all-exceptions.filter.ts`, `configuration.ts`, `admin-init.service.ts`, `trigger-init.service.ts`, `seed-init.service.ts`, Guards, Decorators, `user-mapper.ts`, `photo-utils.ts`, `pagination.ts`, `transaction.ts`, `constants/currency.ts` | 공통 DTO, 파이프, 가드, 데코레이터, soft delete cascade subscriber, 전역 예외 필터 (AllExceptionsFilter), 환경변수 설정 (ConfigModule), 초기 관리자 계정 생성 (AdminInitService), bars 테이블 DB 트리거 + pg_trgm 확장/인덱스 자동 보장 (TriggerInitService: `ensureSearchVectorTrigger`, `ensureLocationTrigger`, `ensurePgTrgmExtensionAndIndex`), dev 환경 바·사진·영업시간·메뉴 아이템 시드 데이터 자동 삽입 (SeedInitService), 공통 유틸 (toUserInfo, extractThumbnail, buildPaginationMeta, runInTransaction), 공통 상수 (DEFAULT_CURRENCY) |
 
 ---
 

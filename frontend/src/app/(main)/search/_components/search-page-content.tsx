@@ -3,29 +3,20 @@
 import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import { useQueryStates, parseAsFloat, parseAsString, parseAsStringLiteral } from 'nuqs';
 import { useOnboarding } from '@/components/onboarding/use-onboarding';
-import { ONBOARDING_STEPS } from '@/components/onboarding/onboarding-steps';
-import { AdvancedMarker, InfoWindow } from '@vis.gl/react-google-maps';
-import Image from 'next/image';
-import Link from 'next/link';
-import { ImageOff } from 'lucide-react';
+import { type MapMouseEvent } from '@vis.gl/react-google-maps';
 import { toast } from 'sonner';
 import { useSearchByAddress, useSearchByName } from '@/hooks/queries/use-search';
 import { useUserLocation } from '@/hooks/use-user-location';
+import { useSearchOnboarding } from '@/hooks/use-search-onboarding';
+import { useScrollRestoration } from '@/hooks/use-scroll-restoration';
 import { LocationProvider } from '@/providers/location-provider';
 import { SearchBar } from '@/components/search/search-bar';
-import { SearchEmptyState } from '@/components/search/search-empty-state';
-import { BarCard, BarCardHorizontalSkeleton } from '@/components/bars/bar-card';
-import { Button } from '@/components/ui/button';
-import { MapView } from '@/components/map/map-view';
-import { BarMarker } from '@/components/map/bar-marker';
-import { UserLocationDot } from '@/components/map/user-location-dot';
-import { SearchFitBounds } from '@/components/map/search-fit-bounds';
-import { SKELETON_COUNT } from '@/lib/constants';
-import type { BarSummary } from '@/types';
+import { SearchMapPanel } from '@/app/(main)/search/_components/search-map-panel';
+import { SearchResultsPanel } from '@/app/(main)/search/_components/search-results-panel';
+import type { BarSummary, LatLng } from '@/types';
 
 const SEARCH_TABS = ['address', 'name', 'both', 'map'] as const;
 const SEARCH_PARAMS_KEY = 'search-params';
-const SCROLL_POSITION_KEY = 'search-scroll-position';
 
 /** URL에 검색 파라미터가 없으면 sessionStorage에서 복원 후 Inner를 마운트 */
 export function SearchPageContent() {
@@ -95,7 +86,7 @@ function SearchPageContentInner() {
   /** 선택된 바 (InfoWindow 표시용) */
   const [selectedBar, setSelectedBar] = useState<BarSummary | null>(null);
   /** 지도 클릭 핀 (map 탭 전용) */
-  const [mapPin, setMapPin] = useState<{ lat: number; lng: number } | null>(null);
+  const [mapPin, setMapPin] = useState<LatLng | null>(null);
   /** 지도에 표시할 바 목록 (검색 결과 0건 시 이전 결과 유지) */
   const [displayedBars, setDisplayedBars] = useState<BarSummary[]>([]);
   /** 결과 패널 ref (데스크탑 독립 스크롤용) */
@@ -210,46 +201,25 @@ function SearchPageContentInner() {
     }
   }, [bars, isLoading, hasResults]);
 
-  /** 온보딩 Step 0~3: forceTab으로 탭 강제 전환 */
-  const isOnboardingTabStep =
-    onboardingState.phase === 'active' &&
-    onboardingState.currentStep <= 3;
+  /** 탭 변경 핸들러 — URL 상태와 동기화 (온보딩 중 탭 전환 차단) */
+  const setTabForOnboarding = useCallback(
+    (value: string) => {
+      setSearchState({ tab: value as typeof tab });
+    },
+    [setSearchState],
+  );
 
-  useEffect(() => {
-    if (!isOnboardingTabStep) return;
-    const stepDef = ONBOARDING_STEPS[onboardingState.currentStep];
-    if (stepDef?.forceTab && stepDef.forceTab !== tab) {
-      setSearchState({ tab: stepDef.forceTab as typeof tab });
-    }
-  }, [isOnboardingTabStep, onboardingState.currentStep, tab, setSearchState]);
-
-  /** 온보딩 Step 4: mapPin 변경 감지 → notifyEvent */
-  const prevMapPinRef = useRef(mapPin);
-  useEffect(() => {
-    if (
-      onboardingState.phase === 'active' &&
-      onboardingState.currentStep === 4 &&
-      mapPin &&
-      !prevMapPinRef.current
-    ) {
-      notifyEvent({ type: 'mapPin' });
-    }
-    prevMapPinRef.current = mapPin;
-  }, [mapPin, onboardingState.phase, onboardingState.currentStep, notifyEvent]);
-
-  /** 온보딩 Step 6: 검색 결과 0건 시 Step 4(맵 핀)로 되돌림 */
-  useEffect(() => {
-    if (
-      onboardingState.phase === 'active' &&
-      onboardingState.currentStep === 6 &&
-      !isLoading &&
-      hasResults &&
-      bars.length === 0
-    ) {
-      toast.info('No results found. Try searching a different area.');
-      goToStep(4);
-    }
-  }, [onboardingState.phase, onboardingState.currentStep, isLoading, hasResults, bars.length, goToStep]);
+  const { isOnboardingTabStep } = useSearchOnboarding({
+    onboardingState,
+    tab,
+    mapPin,
+    setTab: setTabForOnboarding,
+    goToStep,
+    notifyEvent,
+    isLoading,
+    hasResults,
+    barsLength: bars.length,
+  });
 
   /** 탭 변경 핸들러 — URL 상태와 동기화 (온보딩 중 탭 전환 차단) */
   const handleTabChange = useCallback(
@@ -260,241 +230,32 @@ function SearchPageContentInner() {
     [setSearchState, isOnboardingTabStep],
   );
 
-  /** 스크롤 위치 저장 (데스크탑: contentRef, 모바일: window) */
-  useEffect(() => {
-    let timer: ReturnType<typeof setTimeout>;
-    const getTarget = () => {
-      const el = contentRef.current;
-      return el && el.scrollHeight > el.clientHeight ? el : null;
-    };
-    const handleScroll = () => {
-      clearTimeout(timer);
-      timer = setTimeout(() => {
-        const el = getTarget();
-        const y = el ? el.scrollTop : window.scrollY;
-        sessionStorage.setItem(SCROLL_POSITION_KEY, String(y));
-      }, 100);
-    };
-    const el = getTarget();
-    const target: EventTarget = el ?? window;
-    target.addEventListener('scroll', handleScroll, { passive: true });
-    return () => {
-      clearTimeout(timer);
-      target.removeEventListener('scroll', handleScroll);
-    };
-  }, []);
-
-  /** 스크롤 위치 복원 (데이터 로드 완료 후) */
-  useEffect(() => {
-    if (isLoading) return;
-    const saved = sessionStorage.getItem(SCROLL_POSITION_KEY);
-    if (saved) {
-      const y = Number(saved);
-      requestAnimationFrame(() => {
-        const el = contentRef.current;
-        if (el && el.scrollHeight > el.clientHeight) {
-          el.scrollTop = y;
-        } else {
-          window.scrollTo(0, y);
-        }
-      });
-    }
-  }, [isLoading]);
+  useScrollRestoration({ contentRef, isLoading });
 
   /** 위치 권한 미허용 배너 (이름만 검색 시 또는 기본 상태에서) */
   const needsLocation = (hasName && !hasExplicitAddress) || (!hasName && !hasExplicitAddress);
   const showLocationBanner = needsLocation && !location && isPermissionDenied && !locationBannerDismissed;
 
-  const locationBanner = (
-    <>
-      {isLocationLoading && !hasExplicitAddress && (
-        <p className="mb-4 text-sm text-muted-foreground">Detecting your location...</p>
-      )}
-      {showLocationBanner && (
-        <div className="mb-4 flex items-center gap-2 rounded-md border border-yellow-200 bg-yellow-50 px-3 py-2 text-sm dark:border-yellow-900 dark:bg-yellow-950">
-          <span className="text-yellow-800 dark:text-yellow-200">
-            {hasName
-              ? 'Location access is required for name-only search. Please allow location access.'
-              : 'Allow location access to see nearby bars.'}
-          </span>
-          <button
-            type="button"
-            className="ml-auto shrink-0 text-sm font-medium text-yellow-800 underline hover:no-underline dark:text-yellow-200"
-            onClick={requestLocation}
-          >
-            Allow
-          </button>
-          <button
-            type="button"
-            className="shrink-0 text-yellow-600 hover:text-yellow-800 dark:text-yellow-400 dark:hover:text-yellow-200"
-            onClick={() => setLocationBannerDismissed(true)}
-            aria-label="Close"
-          >
-            ✕
-          </button>
-        </div>
-      )}
-    </>
-  );
-
-  /** 더보기 버튼 (주소 모드 또는 이름 모드) */
+  /** 더보기 버튼 활성 쿼리 */
   const activeQuery = isNameMode ? nameQuery : addressQuery;
-  const showLoadMore = hasResults && activeQuery.hasNextPage;
-  const loadMoreButton = showLoadMore && (
-    <div className="mt-6 flex justify-center">
-      <Button
-        variant="outline"
-        onClick={() => activeQuery.fetchNextPage()}
-        disabled={activeQuery.isFetchingNextPage}
-        data-testid="load-more-button"
-      >
-        {activeQuery.isFetchingNextPage ? 'Loading...' : 'Load More'}
-      </Button>
-    </div>
-  );
 
   return (
     <div className="flex flex-col md:flex-row md:h-[calc(100dvh-4rem)]">
-      {/* 지도 패널 */}
-      <div className="shrink-0 px-4 pt-4 md:sticky md:top-16 md:z-0 md:h-[calc(100dvh-4rem)] md:w-1/2 md:p-0 lg:w-[55%]">
-        <MapView
-          center={mapCenter}
-          className="h-[200px] overflow-hidden rounded-lg md:h-full md:rounded-none"
-          onMapClick={(e) => {
-            setSelectedBar(null);
-            if (tab === 'map') {
-              const latLng = e.detail.latLng;
-              if (latLng) setMapPin({ lat: latLng.lat, lng: latLng.lng });
-            }
-          }}
-        >
-          {mapCenter && <UserLocationDot position={mapCenter} />}
-          {tab === 'map' && mapPin && (
-            <AdvancedMarker position={mapPin}>
-              <svg
-                width="22"
-                height="28"
-                viewBox="0 0 56 72"
-                fill="none"
-                aria-hidden="true"
-              >
-                <defs>
-                  <linearGradient id="search-pin-grad" x1="28" y1="0" x2="28" y2="60" gradientUnits="userSpaceOnUse">
-                    <stop stopColor="#2C2418" />
-                    <stop offset="1" stopColor="#1A1610" />
-                  </linearGradient>
-                </defs>
-                <path
-                  d="M28 0C12.536 0 0 12.536 0 28c0 21 28 44 28 44s28-23 28-44C56 12.536 43.464 0 28 0z"
-                  fill="url(#search-pin-grad)"
-                />
-                <path
-                  d="M20 17h16l-6 10h-4l-6-10z"
-                  fill="none"
-                  stroke="#E8A849"
-                  strokeWidth="1.8"
-                  strokeLinejoin="round"
-                />
-                <rect x="27" y="27" width="2" height="5" rx="0.8" fill="#E8A849" />
-                <rect x="24" y="32" width="8" height="1.5" rx="0.75" fill="#E8A849" />
-                <line x1="21" y1="20" x2="35" y2="20" stroke="#E8A849" strokeWidth="1" opacity="0.4" />
-              </svg>
-            </AdvancedMarker>
-          )}
-          {displayedBars.map((bar) => (
-            <BarMarker
-              key={bar.id}
-              bar={bar}
-              onClick={() => setSelectedBar(selectedBar?.id === bar.id ? null : bar)}
-            />
-          ))}
-          {selectedBar && (
-            <InfoWindow
-              position={{ lat: selectedBar.latitude, lng: selectedBar.longitude }}
-              headerDisabled
-              pixelOffset={[0, -32]}
-            >
-              {/* 모바일: 가로 컴팩트 레이아웃 */}
-              <Link
-                href={`/bars/${selectedBar.id}`}
-                className="flex w-[200px] gap-2 no-underline md:hidden"
-              >
-                {selectedBar.thumbnail ? (
-                  <div className="relative size-[60px] shrink-0 overflow-hidden rounded">
-                    <Image
-                      src={selectedBar.thumbnail}
-                      alt={selectedBar.name}
-                      fill
-                      className="object-cover"
-                      sizes="60px"
-                    />
-                  </div>
-                ) : (
-                  <div className="flex size-[60px] shrink-0 items-center justify-center rounded bg-muted">
-                    <ImageOff className="size-4 text-muted-foreground" />
-                  </div>
-                )}
-                <div className="flex min-w-0 flex-col justify-center">
-                  <p className="m-0 truncate text-sm font-semibold text-black">
-                    {selectedBar.name}
-                  </p>
-                  <p className="m-0 mt-0.5 truncate text-xs text-muted-foreground">
-                    {selectedBar.address}
-                  </p>
-                  {selectedBar.averageRating > 0 && (
-                    <p className="m-0 mt-0.5 text-xs text-amber-600">
-                      ★ {selectedBar.averageRating.toFixed(1)}
-                      <span className="ml-1 text-muted-foreground">
-                        ({selectedBar.reviewCount})
-                      </span>
-                    </p>
-                  )}
-                </div>
-              </Link>
-              {/* 데스크탑: 세로 레이아웃 */}
-              <Link
-                href={`/bars/${selectedBar.id}`}
-                className="hidden w-[200px] no-underline md:block"
-              >
-                {selectedBar.thumbnail ? (
-                  <div className="relative mb-1.5 h-[100px] w-full overflow-hidden rounded">
-                    <Image
-                      src={selectedBar.thumbnail}
-                      alt={selectedBar.name}
-                      fill
-                      className="object-cover"
-                      sizes="200px"
-                    />
-                  </div>
-                ) : (
-                  <div className="mb-1.5 flex h-[100px] w-full items-center justify-center rounded bg-muted">
-                    <ImageOff className="size-6 text-muted-foreground" />
-                  </div>
-                )}
-                <p className="m-0 text-sm font-semibold text-black">
-                  {selectedBar.name}
-                </p>
-                <p className="m-0 mt-0.5 text-xs text-muted-foreground">
-                  {selectedBar.address}
-                </p>
-                {selectedBar.averageRating > 0 && (
-                  <p className="m-0 mt-1 text-xs text-amber-600">
-                    ★ {selectedBar.averageRating.toFixed(1)}
-                    <span className="ml-1 text-muted-foreground">
-                      ({selectedBar.reviewCount})
-                    </span>
-                  </p>
-                )}
-              </Link>
-            </InfoWindow>
-          )}
-          {displayedBars.length > 0 && (
-            <SearchFitBounds
-              points={displayedBars.map((b) => ({ lat: b.latitude, lng: b.longitude }))}
-            />
-          )}
-        </MapView>
-      </div>
+      <SearchMapPanel
+        mapCenter={mapCenter}
+        tab={tab}
+        mapPin={mapPin}
+        displayedBars={displayedBars}
+        selectedBar={selectedBar}
+        onSelectBar={setSelectedBar}
+        onMapClick={(e: MapMouseEvent) => {
+          setSelectedBar(null);
+          if (tab === 'map') {
+            const latLng = e.detail.latLng;
+            if (latLng) setMapPin({ lat: latLng.lat, lng: latLng.lng });
+          }
+        }}
+      />
 
       {/* 검색 + 결과 패널 */}
       <div ref={contentRef} className="flex-1 px-4 py-4 md:overflow-y-auto md:px-6 lg:px-8 scrollbar-hide">
@@ -511,48 +272,52 @@ function SearchPageContentInner() {
             onMapSearch={handleMapSearch}
           />
         </div>
-        {locationBanner}
 
-        {/* 결과 */}
-        <div className="min-w-0 flex-1">
-          {hasResults && bars.length > 0 && (
-            <p className="mb-4 text-sm text-muted-foreground" aria-live="polite">
-              {isDefaultNearby ? 'Nearby bars' : `${bars.length} result${bars.length !== 1 ? 's' : ''}`}
-            </p>
+        {/* 위치 배너 */}
+        <>
+          {isLocationLoading && !hasExplicitAddress && (
+            <p className="mb-4 text-sm text-muted-foreground">Detecting your location...</p>
           )}
-
-          {!hasResults && !isLocationLoading ? (
-            <p className="py-12 text-center text-muted-foreground">
-              {isPermissionDenied
-                ? 'Allow location access or search by address to find bars.'
-                : 'Search by address, bar name, or both to find bars.'}
-            </p>
-          ) : showEmpty ? (
-            <SearchEmptyState query={name ?? addressDisplay ?? undefined} onResetFilters={handleResetFilters} />
-          ) : isLoading ? (
-            <div className="space-y-3">
-              {Array.from({ length: SKELETON_COUNT }, (_, i) => (
-                <BarCardHorizontalSkeleton key={i} />
-              ))}
+          {showLocationBanner && (
+            <div className="mb-4 flex items-center gap-2 rounded-md border border-yellow-200 bg-yellow-50 px-3 py-2 text-sm dark:border-yellow-900 dark:bg-yellow-950">
+              <span className="text-yellow-800 dark:text-yellow-200">
+                {hasName
+                  ? 'Location access is required for name-only search. Please allow location access.'
+                  : 'Allow location access to see nearby bars.'}
+              </span>
+              <button
+                type="button"
+                className="ml-auto shrink-0 text-sm font-medium text-yellow-800 underline hover:no-underline dark:text-yellow-200"
+                onClick={requestLocation}
+              >
+                Allow
+              </button>
+              <button
+                type="button"
+                className="shrink-0 text-yellow-600 hover:text-yellow-800 dark:text-yellow-400 dark:hover:text-yellow-200"
+                onClick={() => setLocationBannerDismissed(true)}
+                aria-label="Close"
+              >
+                ✕
+              </button>
             </div>
-          ) : (
-            <>
-              <div className="space-y-3">
-                {bars.map((bar, index) => (
-                  <BarCard
-                    key={bar.id}
-                    bar={bar}
-                    variant="horizontal"
-                    distanceKm={bar.distanceKm}
-                    similarityScore={bar.similarityScore}
-                    priority={index === 0}
-                  />
-                ))}
-              </div>
-              {loadMoreButton}
-            </>
           )}
-        </div>
+        </>
+
+        <SearchResultsPanel
+          bars={bars}
+          isLoading={isLoading}
+          showEmpty={showEmpty}
+          query={name ?? addressDisplay ?? undefined}
+          hasResults={hasResults}
+          isLocationLoading={isLocationLoading}
+          isPermissionDenied={isPermissionDenied}
+          isDefaultNearby={isDefaultNearby}
+          hasNextPage={activeQuery.hasNextPage}
+          isFetchingNextPage={activeQuery.isFetchingNextPage}
+          onLoadMore={() => activeQuery.fetchNextPage()}
+          onResetFilters={handleResetFilters}
+        />
       </div>
     </div>
   );

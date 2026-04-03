@@ -12,7 +12,7 @@ NestJS(backend) + Next.js(frontend) 풀스택 프로젝트. 패키지 매니저�
 
 | Feature | Frontend (`frontend/src/`) | Backend (`backend/src/`) |
 |---------|---------------------------|--------------------------|
-| 인증 (로그인/회원가입) | `app/(auth)/` `components/auth/` `hooks/use-auth.ts` | `auth/` |
+| 인증 (로그인/회원가입) | `app/(auth)/` `components/auth/` (`email-verification-steps.tsx`) `hooks/use-auth.ts` | `auth/` |
 | 홈/검색 | `app/(main)/page.tsx` `(main)/search/` `components/search/` `hooks/queries/use-search.ts` | `search/` |
 | 바 (상세/등록/수정) | `app/(main)/bars/` `(main)/my-bars/` `components/bars/` `hooks/queries/use-bars.ts` | `bars/` `photos/` |
 | 북마크 | `app/(main)/bookmarks/` `hooks/queries/use-bookmarks.ts` | `bookmarks/` |
@@ -22,8 +22,9 @@ NestJS(backend) + Next.js(frontend) 풀스택 프로젝트. 패키지 매니저�
 | 관리자 | `app/admin/` `components/admin/` `hooks/queries/use-admin.ts` | `admin/` |
 | DB/엔티티 | — | `entities/` `migrations/` |
 | API/DTO | `lib/api.ts` `lib/api-endpoints.ts` | 각 모듈 `*.dto.ts` `*.controller.ts` |
-| 공유 타입/상수 | `packages/shared/src/` | same |
-| 디자인 시스템/UI | `components/ui/` `components/layout/` | — |
+| 공통 유틸 | `lib/error-utils.ts` `lib/format-utils.ts` | — |
+| 공유 타입/상수 | `types/` (`common.ts`: `LatLng`) `packages/shared/src/` | same |
+| 디자인 시스템/UI | `components/ui/` (`password-input.tsx`) `components/layout/` | — |
 
 ## Tech Stack
 - **Language**: TypeScript (strict mode)

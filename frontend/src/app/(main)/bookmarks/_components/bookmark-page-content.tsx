@@ -1,13 +1,12 @@
 'use client';
 
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { parseAsInteger, useQueryState } from 'nuqs';
 import { Bookmark, ImageOff, Search, Pencil } from 'lucide-react';
-import { toast } from 'sonner';
 import { useBookmarks } from '@/hooks/queries/use-bookmarks';
-import { useBookmarkMutation } from '@/hooks/queries/use-search';
+import { useBookmarkEditMode } from '@/hooks/use-bookmark-edit-mode';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Pagination } from '@/components/ui/pagination';
 import { Button } from '@/components/ui/button';
@@ -21,23 +20,23 @@ import type { BookmarkItem } from '@/types';
 export function BookmarkPageContent() {
   const [page, setPage] = useQueryState('page', parseAsInteger.withDefault(1));
   const { data, isLoading } = useBookmarks({ page });
-  const bookmarkMutation = useBookmarkMutation();
-
-  const [isEditMode, setIsEditMode] = useState(false);
-  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
-  const [isDeleting, setIsDeleting] = useState(false);
 
   const items = data?.items ?? [];
   const totalItems = data?.meta.totalItems ?? 0;
   const totalPages = data?.meta.totalPages ?? 0;
 
-  /** 페이지 변경 시 편집 모드 해제 + 선택 초기화 */
-  const prevPageRef = useRef(page);
-  if (prevPageRef.current !== page) {
-    prevPageRef.current = page;
-    setIsEditMode(false);
-    setSelectedIds(new Set());
-  }
+  const {
+    isEditMode,
+    selectedIds,
+    isDeleting,
+    isAllSelected,
+    enterEditMode,
+    exitEditMode,
+    toggleSelect,
+    toggleSelectAll,
+    handleBatchDelete,
+    handleItemKeyDown,
+  } = useBookmarkEditMode(items, page);
 
   /** 삭제 완료 후 페이지 유효성 보정 */
   useEffect(() => {
@@ -45,71 +44,6 @@ export function BookmarkPageContent() {
       setPage(Math.max(1, totalPages));
     }
   }, [isLoading, totalPages, page, setPage]);
-
-  /** 아이템 선택 토글 */
-  const toggleSelect = useCallback((id: number) => {
-    setSelectedIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) {
-        next.delete(id);
-      } else {
-        next.add(id);
-      }
-      return next;
-    });
-  }, []);
-
-  /** 전체 선택/해제 */
-  const toggleSelectAll = useCallback(() => {
-    if (selectedIds.size === items.length) {
-      setSelectedIds(new Set());
-    } else {
-      setSelectedIds(new Set(items.map((item) => item.id)));
-    }
-  }, [items, selectedIds.size]);
-
-  /** 편집 모드 종료 */
-  const exitEditMode = useCallback(() => {
-    setIsEditMode(false);
-    setSelectedIds(new Set());
-  }, []);
-
-  /** 일괄 삭제 */
-  const handleBatchDelete = useCallback(async () => {
-    if (selectedIds.size === 0) return;
-    setIsDeleting(true);
-
-    const results = await Promise.allSettled(
-      Array.from(selectedIds).map((barId) =>
-        bookmarkMutation.mutateAsync({ barId, action: 'remove' }),
-      ),
-    );
-
-    const succeeded = results.filter((r) => r.status === 'fulfilled').length;
-    const failed = results.filter((r) => r.status === 'rejected').length;
-
-    if (failed > 0) {
-      toast.error(`${succeeded} removed, ${failed} failed`);
-    } else {
-      toast.success(`${succeeded} bookmark${succeeded > 1 ? 's' : ''} removed`);
-    }
-
-    exitEditMode();
-    setIsDeleting(false);
-  }, [selectedIds, bookmarkMutation, exitEditMode]);
-
-  /** 편집 모드 아이템 키보드 핸들러 */
-  const handleItemKeyDown = useCallback(
-    (e: React.KeyboardEvent, id: number) => {
-      if (e.key === 'Enter' || e.key === ' ') {
-        e.preventDefault();
-        toggleSelect(id);
-      }
-    },
-    [toggleSelect],
-  );
-
-  const isAllSelected = items.length > 0 && selectedIds.size === items.length;
 
   return (
     <div className={`container mx-auto px-4 py-8 md:px-6 lg:px-8${isEditMode ? ' pb-24' : ''}`}>
@@ -138,7 +72,7 @@ export function BookmarkPageContent() {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => setIsEditMode(true)}
+                onClick={enterEditMode}
                 data-testid="bookmark-edit-btn"
               >
                 <Pencil className="size-4" />

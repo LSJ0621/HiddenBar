@@ -1,4 +1,4 @@
-import type { SearchParams, AdminBarsParams, AdminUsersParams, AdminActionsParams } from '@/types';
+import type { SearchParams, AdminBarsParams, AdminUsersParams, AdminActionsParams, LatLng } from '@/types';
 import type { BarStatus } from '@/types';
 import type { ReviewListParams } from '@/types/review';
 import type { AdminReportListParams } from '@/types/review-report';
@@ -30,8 +30,8 @@ export const queryKeys = {
   maps: {
     all: ['maps'] as const,
     directions: (
-      origin: { lat: number; lng: number } | null,
-      dest: { lat: number; lng: number } | null,
+      origin: LatLng | null,
+      dest: LatLng | null,
       mode: string,
     ) => ['maps', 'directions', origin, dest, mode] as const,
   },

@@ -11,86 +11,21 @@ import { firstValueFrom } from 'rxjs';
 import { AxiosError } from 'axios';
 import { TravelMode } from '@my-project/shared';
 import { DirectionsDto } from './dto/directions.dto.js';
-
-interface GoogleLatLng {
-  latitude: number;
-  longitude: number;
-}
-
-interface GoogleNavigationInstruction {
-  instructions?: string;
-}
-
-interface GoogleLocalizedValues {
-  distance?: { text: string };
-  duration?: { text: string };
-}
-
-interface GoogleTransitStop {
-  name?: string;
-  location?: { latLng?: GoogleLatLng };
-}
-
-interface GoogleStopDetails {
-  arrivalStop?: GoogleTransitStop;
-  departureStop?: GoogleTransitStop;
-  arrivalTime?: string;
-  departureTime?: string;
-}
-
-interface GoogleTransitLine {
-  name?: string;
-  nameShort?: string;
-  color?: string;
-  textColor?: string;
-  vehicle?: { type?: string };
-}
-
-interface GoogleTransitDetails {
-  stopDetails?: GoogleStopDetails;
-  transitLine?: GoogleTransitLine;
-  stopCount?: number;
-}
-
-interface GoogleStep {
-  navigationInstruction?: GoogleNavigationInstruction;
-  localizedValues?: GoogleLocalizedValues;
-  startLocation?: { latLng?: GoogleLatLng };
-  endLocation?: { latLng?: GoogleLatLng };
-  distanceMeters?: number;
-  staticDuration?: string;
-  travelMode?: string;
-  transitDetails?: GoogleTransitDetails;
-  polyline?: { encodedPolyline?: string };
-}
-
-interface GoogleLeg {
-  steps?: GoogleStep[];
-}
-
-interface GoogleRoute {
-  duration?: string;
-  distanceMeters?: number;
-  polyline?: { encodedPolyline?: string };
-  legs?: GoogleLeg[];
-}
-
-interface GoogleRoutesResponse {
-  routes?: GoogleRoute[];
-}
-
-/** Our TravelMode → Google Routes API v2 TravelMode */
-const TRAVEL_MODE_MAP: Record<TravelMode, string> = {
-  [TravelMode.WALKING]: 'WALK',
-  [TravelMode.DRIVING]: 'DRIVE',
-  [TravelMode.TRANSIT]: 'TRANSIT',
-};
-
-const BASE_FIELD_MASK =
-  'routes.duration,routes.distanceMeters,routes.polyline.encodedPolyline,routes.legs.steps.navigationInstruction,routes.legs.steps.localizedValues,routes.legs.steps.startLocation,routes.legs.steps.endLocation,routes.legs.steps.travelMode,routes.legs.steps.distanceMeters,routes.legs.steps.staticDuration';
-
-const TRANSIT_EXTRA_FIELDS =
-  ',routes.legs.steps.transitDetails,routes.legs.steps.polyline.encodedPolyline';
+import type {
+  GoogleRoutesResponse,
+  GoogleRoute,
+  GoogleLeg,
+  GoogleStep,
+} from './google-routes.types.js';
+import {
+  GOOGLE_ROUTES_URL,
+  GOOGLE_ROUTES_TIMEOUT,
+  TRAVEL_MODE_MAP,
+  BASE_FIELD_MASK,
+  TRANSIT_EXTRA_FIELDS,
+  DEFAULT_LINE_COLOR,
+  DEFAULT_LINE_TEXT_COLOR,
+} from './google-routes.constants.js';
 
 @Injectable()
 export class MapsService {
@@ -139,7 +74,7 @@ export class MapsService {
     try {
       const response = await firstValueFrom(
         this.httpService.post<GoogleRoutesResponse>(
-          'https://routes.googleapis.com/directions/v2:computeRoutes',
+          GOOGLE_ROUTES_URL,
           body,
           {
             headers: {
@@ -147,7 +82,7 @@ export class MapsService {
               'X-Goog-FieldMask': fieldMask,
               ...(this.referer && { Referer: this.referer }),
             },
-            timeout: 10000,
+            timeout: GOOGLE_ROUTES_TIMEOUT,
           },
         ),
       );
@@ -262,8 +197,8 @@ export class MapsService {
         arrivalTime: td.stopDetails?.arrivalTime ?? '',
         lineName: td.transitLine?.name ?? '',
         lineShortName: td.transitLine?.nameShort ?? '',
-        lineColor: td.transitLine?.color ?? '#4285F4',
-        lineTextColor: td.transitLine?.textColor ?? '#FFFFFF',
+        lineColor: td.transitLine?.color ?? DEFAULT_LINE_COLOR,
+        lineTextColor: td.transitLine?.textColor ?? DEFAULT_LINE_TEXT_COLOR,
         vehicleType: td.transitLine?.vehicle?.type ?? '',
         stopCount: td.stopCount ?? 0,
       };

@@ -8,6 +8,7 @@ import { BarStatus } from '@my-project/shared';
 import { PaginationDto } from '../common/dto/pagination.dto.js';
 import { BarReviewStats } from '../entities/bar-review-stats.entity.js';
 import { extractThumbnail } from '../common/utils/photo-utils.js';
+import { buildPaginationMeta } from '../common/utils/pagination.js';
 
 @Injectable()
 export class BookmarksService {
@@ -130,12 +131,7 @@ export class BookmarksService {
 
     return {
       items: mappedItems,
-      meta: {
-        page,
-        limit,
-        totalItems,
-        totalPages: Math.ceil(totalItems / limit),
-      },
+      meta: buildPaginationMeta(page, limit, totalItems),
     };
   }
 }

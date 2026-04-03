@@ -1,4 +1,5 @@
 import type { BarStatus, DayOfWeek } from '@my-project/shared';
+import type { LatLng } from './common';
 
 /** Bar photo */
 export interface BarPhoto {
@@ -118,8 +119,8 @@ export interface DirectionsStep {
   instruction: string;
   distance: { text: string; value: number };
   duration: { text: string; value: number };
-  startLocation: { lat: number; lng: number };
-  endLocation: { lat: number; lng: number };
+  startLocation: LatLng;
+  endLocation: LatLng;
   travelMode: string;
   polylines?: string[];
   transitDetails?: TransitDetail;

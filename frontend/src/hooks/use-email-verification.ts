@@ -3,6 +3,7 @@
 import { useState, useCallback } from 'react';
 import { toast } from 'sonner';
 import { AxiosError } from 'axios';
+import { showErrorToast } from '@/lib/error-utils';
 
 import api from '@/lib/api';
 import { API_ENDPOINTS } from '@/lib/api-endpoints';
@@ -80,8 +81,8 @@ export function useEmailVerification(purpose: EmailVerificationPurpose) {
     try {
       await api.post(API_ENDPOINTS.AUTH.SEND_CODE, { email, purpose });
       toast.success('Verification code resent');
-    } catch {
-      toast.error('Failed to send verification code. Please try again.');
+    } catch (error) {
+      showErrorToast(error, 'Failed to send verification code. Please try again.');
     } finally {
       setIsSending(false);
     }

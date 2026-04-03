@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { MessageSquare, LogIn, Pencil } from 'lucide-react';
+import { MessageSquare, Pencil } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -10,15 +10,6 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import { Skeleton } from '@/components/ui/skeleton';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Pagination } from '@/components/ui/pagination';
 import { useAuthStore } from '@/hooks/use-auth';
@@ -32,6 +23,8 @@ import { ReviewCard } from './review-card';
 import { ReviewFormModal } from './review-form-modal';
 import { ReviewModerateDialog } from './review-moderate-dialog';
 import { ReviewReportDialog } from './review-report-dialog';
+import { ConfirmDeleteDialog } from './review-section-dialogs';
+import { ReviewListSkeleton, LoginPrompt } from './review-list-skeleton';
 
 interface ReviewSectionProps {
   barId: number;
@@ -221,52 +214,24 @@ export const ReviewSection = React.memo(function ReviewSection({
       />
 
       {/* 삭제 확인 다이얼로그 */}
-      <Dialog open={deleteConfirmId !== null} onOpenChange={() => setDeleteConfirmId(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Delete Review</DialogTitle>
-            <DialogDescription>
-              Are you sure you want to delete this review? This action cannot be undone.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteConfirmId(null)}>
-              Cancel
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={handleDeleteConfirm}
-              disabled={deleteReview.isPending}
-            >
-              {deleteReview.isPending ? 'Deleting...' : 'Delete'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <ConfirmDeleteDialog
+        open={deleteConfirmId !== null}
+        onClose={() => setDeleteConfirmId(null)}
+        onConfirm={handleDeleteConfirm}
+        isPending={deleteReview.isPending}
+        title="Delete Review"
+        description="Are you sure you want to delete this review? This action cannot be undone."
+      />
 
       {/* 관리자 삭제 확인 다이얼로그 */}
-      <Dialog open={adminDeleteId !== null} onOpenChange={() => setAdminDeleteId(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Delete Review (Admin)</DialogTitle>
-            <DialogDescription>
-              Are you sure you want to permanently delete this review?
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setAdminDeleteId(null)}>
-              Cancel
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={handleAdminDeleteConfirm}
-              disabled={adminDelete.isPending}
-            >
-              {adminDelete.isPending ? 'Deleting...' : 'Delete'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <ConfirmDeleteDialog
+        open={adminDeleteId !== null}
+        onClose={() => setAdminDeleteId(null)}
+        onConfirm={handleAdminDeleteConfirm}
+        isPending={adminDelete.isPending}
+        title="Delete Review (Admin)"
+        description="Are you sure you want to permanently delete this review?"
+      />
 
       {/* 관리자 상태 변경 다이얼로그 */}
       {moderateReview && (
@@ -291,36 +256,3 @@ export const ReviewSection = React.memo(function ReviewSection({
     </>
   );
 });
-
-/** 로그인 유도 UI */
-function LoginPrompt({ onLogin }: { onLogin: () => void }) {
-  return (
-    <div data-testid="review-login-prompt" className="flex flex-col items-center gap-3 rounded-lg border border-dashed border-border py-12 text-center">
-      <LogIn className="size-8 text-muted-foreground/50" />
-      <p className="text-sm text-muted-foreground">Log in to see reviews</p>
-      <Button size="sm" onClick={onLogin}>
-        Log In
-      </Button>
-    </div>
-  );
-}
-
-/** 리뷰 목록 스켈레톤 */
-function ReviewListSkeleton() {
-  return (
-    <div className="space-y-4">
-      {[1, 2, 3].map((i) => (
-        <div key={i} className="space-y-3 rounded-lg border border-border p-4">
-          <div className="flex items-center gap-3">
-            <Skeleton className="size-9 rounded-full" />
-            <div className="space-y-1">
-              <Skeleton className="h-4 w-24" />
-              <Skeleton className="h-3 w-32" />
-            </div>
-          </div>
-          <Skeleton className="h-16 w-full" />
-        </div>
-      ))}
-    </div>
-  );
-}

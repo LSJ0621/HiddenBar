@@ -13,24 +13,31 @@ import { useSelector } from 'react-redux';
 import type { RootState } from '@/store';
 import {
   ONBOARDING_STEPS,
-  ONBOARDING_COMPLETED_KEY,
-  ONBOARDING_STATE_KEY,
   type OnboardingEvent,
   type StepDefinition,
 } from './onboarding-steps';
 import { OnboardingOverlay, OnboardingTargetTracker } from './onboarding-overlay';
 import { OnboardingTooltip } from './onboarding-tooltip';
 import { OnboardingDialog } from './onboarding-dialog';
+import {
+  restoreState,
+  persistState,
+  clearPersistedState,
+  isCompleted,
+  markCompleted,
+  clearCompleted,
+  matchesPage,
+} from './onboarding-storage';
+import {
+  advanceStep,
+  initialState,
+} from './onboarding-state-machine';
 
-/** 온보딩 상태 단계 */
-export type OnboardingPhase = 'idle' | 'welcome' | 'active' | 'complete';
+// OnboardingPhase와 OnboardingState는 state-machine에서 정의되며,
+// 기존 소비자 코드의 호환성을 위해 여기서 재내보낸다
+export type { OnboardingPhase, OnboardingState } from './onboarding-state-machine';
+import type { OnboardingState } from './onboarding-state-machine';
 
-/** 온보딩 상태 */
-export interface OnboardingState {
-  phase: OnboardingPhase;
-  currentStep: number;
-  targetRect: DOMRect | null;
-}
 
 /** 온보딩 Context 값 */
 export interface OnboardingContextValue {
@@ -45,102 +52,9 @@ export interface OnboardingContextValue {
   notifyEvent: (event: OnboardingEvent) => void;
 }
 
-const initialState: OnboardingState = {
-  phase: 'idle',
-  currentStep: 0,
-  targetRect: null,
-};
-
 export const OnboardingContext = createContext<OnboardingContextValue | null>(
   null,
 );
-
-/** sessionStorage에 저장할 상태 */
-interface PersistedState {
-  phase: OnboardingPhase;
-  currentStep: number;
-}
-
-/** sessionStorage에서 상태 복원 (pathname 기반 검증) */
-function restoreState(pathname: string): PersistedState | null {
-  try {
-    const raw = sessionStorage.getItem(ONBOARDING_STATE_KEY);
-    if (!raw) return null;
-    const parsed = JSON.parse(raw) as PersistedState;
-    if (!parsed.phase || typeof parsed.currentStep !== 'number') return null;
-
-    // 저장된 스텝의 page와 현재 pathname이 매칭되지 않으면 복원 거부
-    const stepDef = ONBOARDING_STEPS[parsed.currentStep];
-    if (stepDef && !matchesPage(pathname, stepDef.page)) {
-      sessionStorage.removeItem(ONBOARDING_STATE_KEY);
-      return null;
-    }
-
-    return { phase: parsed.phase, currentStep: parsed.currentStep };
-  } catch {
-    /* 무시 */
-  }
-  return null;
-}
-
-/** sessionStorage에 상태 저장 */
-function persistState(phase: OnboardingPhase, currentStep: number) {
-  try {
-    sessionStorage.setItem(
-      ONBOARDING_STATE_KEY,
-      JSON.stringify({ phase, currentStep }),
-    );
-  } catch {
-    /* 무시 */
-  }
-}
-
-/** sessionStorage 클리어 */
-function clearPersistedState() {
-  try {
-    sessionStorage.removeItem(ONBOARDING_STATE_KEY);
-  } catch {
-    /* 무시 */
-  }
-}
-
-/** 온보딩 완료 여부 확인 */
-function isCompleted(): boolean {
-  try {
-    return localStorage.getItem(ONBOARDING_COMPLETED_KEY) === 'true';
-  } catch {
-    return false;
-  }
-}
-
-/** 온보딩 완료 플래그 설정 */
-function markCompleted() {
-  try {
-    localStorage.setItem(ONBOARDING_COMPLETED_KEY, 'true');
-  } catch {
-    /* 무시 */
-  }
-}
-
-/** 다음 스텝으로 진행하는 상태 전이 헬퍼 */
-function advanceStep(prev: OnboardingState): OnboardingState {
-  if (prev.phase !== 'active') return prev;
-  const nextStep = prev.currentStep + 1;
-  if (nextStep >= ONBOARDING_STEPS.length) {
-    persistState('complete', prev.currentStep);
-    return { phase: 'complete', currentStep: prev.currentStep, targetRect: null };
-  }
-  persistState('active', nextStep);
-  return { phase: 'active', currentStep: nextStep, targetRect: null };
-}
-
-/** 현재 경로가 스텝 페이지에 해당하는지 확인 */
-function matchesPage(pathname: string, page: string): boolean {
-  if (page === '/bars/[id]') {
-    return /^\/bars\/[^/]+$/.test(pathname);
-  }
-  return pathname === page;
-}
 
 /**
  * 온보딩 가이드 Provider
@@ -276,11 +190,7 @@ export function OnboardingProvider({
 
   /** 투어 재시작 (프로필에서 Replay Tour) */
   const replayTour = useCallback(() => {
-    try {
-      localStorage.removeItem(ONBOARDING_COMPLETED_KEY);
-    } catch {
-      /* 무시 */
-    }
+    clearCompleted();
     clearPersistedState();
     setState({ phase: 'welcome', currentStep: 0, targetRect: null });
     persistState('welcome', 0);

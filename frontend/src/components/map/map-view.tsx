@@ -4,9 +4,10 @@ import { Map, useApiIsLoaded, type MapMouseEvent } from '@vis.gl/react-google-ma
 import { Loader2, MapPinOff } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { DEFAULT_MAP_CENTER, DEFAULT_MAP_ZOOM } from '@/lib/constants';
+import type { LatLng } from '@/types';
 
 interface MapViewProps {
-  center?: { lat: number; lng: number };
+  center?: LatLng;
   zoom?: number;
   children?: React.ReactNode;
   className?: string;

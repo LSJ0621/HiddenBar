@@ -16,6 +16,7 @@ import {
 import { MapView } from '@/components/map/map-view';
 import { AddressSearchInput } from '@/components/bars/address-search-input';
 import type { AddressSearchResult } from '@/hooks/use-address-search';
+import type { LatLng } from '@/types';
 
 interface BarFormStepLocationProps {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -23,9 +24,9 @@ interface BarFormStepLocationProps {
 }
 
 /** Internal component that uses useMap() to control map pan/zoom */
-function MapController({ target }: { target: { lat: number; lng: number } | null }) {
+function MapController({ target }: { target: LatLng | null }) {
   const map = useMap();
-  const prevTarget = useRef<{ lat: number; lng: number } | null>(null);
+  const prevTarget = useRef<LatLng | null>(null);
 
   useEffect(() => {
     if (!map || !target) return;
@@ -48,7 +49,7 @@ export function BarFormStepLocation({ control }: BarFormStepLocationProps) {
   const { setValue } = useFormContext();
   const latitude = useWatch({ control, name: 'latitude' });
   const longitude = useWatch({ control, name: 'longitude' });
-  const [panTarget, setPanTarget] = useState<{ lat: number; lng: number } | null>(null);
+  const [panTarget, setPanTarget] = useState<LatLng | null>(null);
 
   const hasCoords =
     typeof latitude === 'number' &&

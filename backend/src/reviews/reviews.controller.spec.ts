@@ -10,6 +10,7 @@ import {
 import request from 'supertest';
 import { ReviewsController } from './reviews.controller.js';
 import { ReviewsService } from './reviews.service.js';
+import { ReviewPhotosService } from './review-photos.service.js';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
 import { Role, ReviewStatus } from '@my-project/shared';
 
@@ -30,7 +31,7 @@ describe('ReviewsController', () => {
     rating: 4,
     content: 'Great cocktails',
     visitedAt: '2026-03-15',
-    status: ReviewStatus.VISIBLE,
+    status: ReviewStatus.PUBLISHED,
     author: { id: 1, name: 'Test User', profileImageUrl: null },
     photos: [],
     createdAt: new Date().toISOString(),
@@ -60,6 +61,13 @@ describe('ReviewsController', () => {
       controllers: [ReviewsController],
       providers: [
         { provide: ReviewsService, useValue: reviewsService },
+        {
+          provide: ReviewPhotosService,
+          useValue: {
+            uploadPhotos: reviewsService.uploadPhotos,
+            removePhoto: reviewsService.removePhoto,
+          },
+        },
         {
           provide: APP_GUARD,
           useValue: {

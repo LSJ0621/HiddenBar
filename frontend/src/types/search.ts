@@ -1,3 +1,5 @@
+import type { LatLng } from './common';
+
 /** 검색 모드 */
 export type SearchMode = 'address' | 'name' | 'combined' | 'general';
 
@@ -38,14 +40,14 @@ export interface SearchResponse {
   items: BarSummary[];
   hasMore: boolean;
   mode: SearchMode;
-  center?: { lat: number; lng: number };
+  center?: LatLng;
   radiusKm?: number;
 }
 
 /** Nearby bars API response */
 export interface NearbyResponse {
   items: NearbyBar[];
-  center: { lat: number; lng: number };
+  center: LatLng;
   radiusKm: number;
 }
 

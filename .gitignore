@@ -40,6 +40,7 @@ frontend/.claude/
 # Docs — architecture, testing만 공개
 docs/*
 !docs/architecture/
+!docs/architecture.png
 !docs/testing/
 
 # PRD (내부 제품 요구사항)

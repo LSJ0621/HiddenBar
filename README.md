@@ -57,31 +57,7 @@ https://github.com/user-attachments/assets/0570193e-f16a-46ea-a93c-93c6286744d3
 
 ## 🏗️ Architecture
 
-```
-┌─────────────────────────────────────────────────────────┐
-│                    pnpm Monorepo                        │
-│                                                         │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  │
-│  │   frontend/   │  │   backend/   │  │  packages/   │  │
-│  │  Next.js 16   │  │  NestJS 11   │  │   shared/    │  │
-│  │  App Router   │  │  REST API    │  │ Types & Enums│  │
-│  └──────┬───────┘  └──────┬───────┘  └──────────────┘  │
-│         │                  │                             │
-└─────────│──────────────────│─────────────────────────────┘
-          │                  │
-          │   HTTP/REST      │
-          └────────┬─────────┘
-                   │
-          ┌────────▼─────────┐
-          │   NestJS API     │
-          │                  │
-          ├──→ PostgreSQL    │
-          │    + PostGIS     │
-          ├──→ AWS S3        │
-          │    (Images)      │
-          └──→ Google Maps   │
-               API (Routes)  │
-```
+![Architecture](./docs/architecture.png)
 
 > 📄 For detailed technical decisions, see the [Portfolio](#)
 

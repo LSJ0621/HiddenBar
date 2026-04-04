@@ -33,15 +33,15 @@
 <tr>
 <td width="33%" align="center">
 <b>Map Pin Search</b><br><br>
-<video src="https://github.com/user-attachments/assets/049d559f-dd09-4efa-835f-8fdd3f1449f0" width="250" autoplay loop muted></video>
+<img src="./docs/gif/Map_pin_search.gif" width="280"/>
 </td>
 <td width="33%" align="center">
 <b>Step-by-step Directions</b><br><br>
-<video src="https://github.com/user-attachments/assets/e5aab041-fc77-412e-885f-b6c0d95d0042" width="250" autoplay loop muted></video>
+<img src="./docs/gif/경로탐색.gif" width="280"/>
 </td>
 <td width="33%" align="center">
 <b>Route Alternatives</b><br><br>
-<video src="https://github.com/user-attachments/assets/0570193e-f16a-46ea-a93c-93c6286744d3" width="250" autoplay loop muted></video>
+<img src="./docs/gif/경로대안.gif" width="280"/>
 </td>
 </tr>
 </table>

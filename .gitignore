@@ -41,6 +41,7 @@ frontend/.claude/
 docs/*
 !docs/architecture/
 !docs/architecture.png
+!docs/gif/
 !docs/testing/
 
 # PRD (내부 제품 요구사항)

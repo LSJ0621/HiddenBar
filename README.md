@@ -29,15 +29,15 @@
 
 ### Map Pin Search
 
-https://github.com/user-attachments/assets/cd124858-8d7c-40ad-964a-81bdb857fb53
+https://github.com/user-attachments/assets/049d559f-dd09-4efa-835f-8fdd3f1449f0
 
 ### Step-by-step Directions
 
-https://github.com/user-attachments/assets/56136bc0-019f-48a9-ad41-5411c11d552e
+https://github.com/user-attachments/assets/e5aab041-fc77-412e-885f-b6c0d95d0042
 
 ### Route Alternatives
 
-https://github.com/user-attachments/assets/d0b7c96b-b285-4c17-861f-095dd8c00c3c
+https://github.com/user-attachments/assets/0570193e-f16a-46ea-a93c-93c6286744d3
 
 ---
 

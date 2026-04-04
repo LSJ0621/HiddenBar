@@ -1,112 +1,192 @@
-# Hidden Bar
+<div align="center">
 
-> 동남아시아의 숨은 바를 발견하고, 저장하고, 방문까지 이어지게 하는 풀스택 웹 서비스
+# 🍸 HiddenBar
 
-<!-- 대표 스크린샷 또는 GIF -->
-<!-- ![Hidden Bar Demo](./docs/assets/demo.gif) -->
+**Discover hidden local bars in Southeast Asia — search, explore, and get directions**
 
-## Tech Stack
+![NestJS](https://img.shields.io/badge/NestJS-11-E0234E?style=flat-square&logo=nestjs&logoColor=white)
+![Next.js](https://img.shields.io/badge/Next.js-16-000000?style=flat-square&logo=next.js&logoColor=white)
+![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?style=flat-square&logo=typescript&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-4169E1?style=flat-square&logo=postgresql&logoColor=white)
+![PostGIS](https://img.shields.io/badge/PostGIS-3.4-5A9B4E?style=flat-square)
+![React](https://img.shields.io/badge/React-19-61DAFB?style=flat-square&logo=react&logoColor=black)
+![TanStack Query](https://img.shields.io/badge/TanStack_Query-5-FF4154?style=flat-square&logo=reactquery&logoColor=white)
+![Redux Toolkit](https://img.shields.io/badge/Redux_Toolkit-2-764ABC?style=flat-square&logo=redux&logoColor=white)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-4-06B6D4?style=flat-square&logo=tailwindcss&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?style=flat-square&logo=docker&logoColor=white)
+![pnpm](https://img.shields.io/badge/pnpm-10-F69220?style=flat-square&logo=pnpm&logoColor=white)
 
-### Frontend
+![Deploy](https://img.shields.io/badge/Deploy-Vercel-000000?style=flat-square&logo=vercel&logoColor=white)
+![License](https://img.shields.io/badge/License-UNLICENSED-gray?style=flat-square)
 
-![Next.js](https://img.shields.io/badge/Next.js-16-000000?logo=next.js)
-![React](https://img.shields.io/badge/React-19-61DAFB?logo=react)
-![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript)
-![TanStack Query](https://img.shields.io/badge/TanStack_Query-5-FF4154?logo=reactquery)
-![Redux Toolkit](https://img.shields.io/badge/Redux_Toolkit-2-764ABC?logo=redux)
-![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-4-06B6D4?logo=tailwindcss)
-![shadcn/ui](https://img.shields.io/badge/shadcn/ui-4-000000)
+[Demo](#-demo) · [Features](#-key-features) · [Architecture](#️-architecture) · [Tech Stack](#️-tech-stack) · [Getting Started](#-getting-started) · [Project Structure](#-project-structure) · [Related](#-related)
 
-### Backend
+</div>
 
-![NestJS](https://img.shields.io/badge/NestJS-11-E0234E?logo=nestjs)
-![TypeORM](https://img.shields.io/badge/TypeORM-0.3-FE0803)
-![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-4169E1?logo=postgresql)
-![PostGIS](https://img.shields.io/badge/PostGIS-3.4-5A9B4E)
+---
 
-### Infra & Tools
+## 📸 Demo
 
-![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker)
-![AWS S3](https://img.shields.io/badge/AWS_S3-Storage-569A31?logo=amazons3)
-![Google Maps](https://img.shields.io/badge/Google_Maps-API-4285F4?logo=googlemaps)
-![pnpm](https://img.shields.io/badge/pnpm-10-F69220?logo=pnpm)
+### Map Pin Search
 
-## Features
+https://github.com/user-attachments/assets/cd124858-8d7c-40ad-964a-81bdb857fb53
 
-### 🔍 바 검색
+### Step-by-step Directions
 
-키워드, 위치, 가격대 기반으로 숨은 바를 검색합니다. 사용자 위치를 활용한 거리순 정렬을 지원합니다.
+https://github.com/user-attachments/assets/56136bc0-019f-48a9-ad41-5411c11d552e
 
-<!-- ![Search](./docs/assets/search.gif) -->
+### Route Alternatives
 
-### 🗺️ 지도 & 길안내
+https://github.com/user-attachments/assets/d0b7c96b-b285-4c17-861f-095dd8c00c3c
 
-Google Maps 기반 지도에서 바 위치를 확인하고, 실시간 길안내로 방문까지 이어집니다.
+---
 
-<!-- ![Directions](./docs/assets/directions.gif) -->
+## ✨ Key Features
 
-### 📌 바 등록 & 관리
+🔍 **4 Search Modes** — Find bars by address, name, combined filters, or by dropping a pin directly on the map.
 
-바 오너가 직접 매장을 등록하고, 사진·메뉴·영업시간 등 상세 정보를 관리합니다.
+🗺️ **Turn-by-turn Directions** — Get walking, transit, or driving directions with route alternatives powered by Google Routes API.
 
-<!-- ![Bar Registration](./docs/assets/bar-registration.gif) -->
+🍹 **Rich Bar Details** — Browse photos, menus with prices, operating hours, and user reviews for each bar.
 
-### ⭐ 북마크 & 리뷰
+📌 **Bar Registration** — Bar owners can register their venue, upload photos, and manage bar info through a dedicated dashboard.
 
-마음에 드는 바를 북마크로 저장하고, 방문 후 리뷰를 남길 수 있습니다.
+⭐ **Bookmarks & Reviews** — Save favorite bars to your collection and leave reviews after visiting.
 
-<!-- ![Bookmark](./docs/assets/bookmark.gif) -->
+---
 
-## Architecture
+## 🏗️ Architecture
 
 ```
-my-project/
-├── frontend/          # Next.js (App Router)
-├── backend/           # NestJS REST API
-└── packages/
-    └── shared/        # 공유 타입 & enum (@my-project/shared)
+┌─────────────────────────────────────────────────────────┐
+│                    pnpm Monorepo                        │
+│                                                         │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  │
+│  │   frontend/   │  │   backend/   │  │  packages/   │  │
+│  │  Next.js 16   │  │  NestJS 11   │  │   shared/    │  │
+│  │  App Router   │  │  REST API    │  │ Types & Enums│  │
+│  └──────┬───────┘  └──────┬───────┘  └──────────────┘  │
+│         │                  │                             │
+└─────────│──────────────────│─────────────────────────────┘
+          │                  │
+          │   HTTP/REST      │
+          └────────┬─────────┘
+                   │
+          ┌────────▼─────────┐
+          │   NestJS API     │
+          │                  │
+          ├──→ PostgreSQL    │
+          │    + PostGIS     │
+          ├──→ AWS S3        │
+          │    (Images)      │
+          └──→ Google Maps   │
+               API (Routes)  │
 ```
 
-```
-[Client] ──→ [Next.js Frontend] ──→ [NestJS API] ──→ [PostgreSQL + PostGIS]
-                                         │
-                                         ├──→ [AWS S3] (이미지 저장)
-                                         └──→ [Google Maps API] (지도/길안내)
-```
+> 📄 For detailed technical decisions, see the [Portfolio](#)
 
-## Docs
+---
 
-- [시스템 개요](./docs/architecture/system-overview.md)
-- [프론트엔드 구조](./docs/architecture/frontend-overview.md)
-- [API 명세](./docs/architecture/api/README.md)
-- [DB 구조 (ERD)](./docs/architecture/database/README.md)
-- [테스트 전략](./docs/testing/strategy.md)
+## 🛠️ Tech Stack
 
-## Getting Started
+| Category | Technologies |
+|----------|-------------|
+| **Backend** | NestJS 11, TypeORM, Passport JWT, class-validator, Pino logger |
+| **Frontend** | Next.js 16 (App Router), React 19, TanStack Query 5, Redux Toolkit 2, React Hook Form + Zod |
+| **UI** | Tailwind CSS 4, shadcn/ui (Radix UI), Lucide Icons, Embla Carousel |
+| **Database** | PostgreSQL 16, PostGIS 3.4 |
+| **Maps / Location** | Google Maps API, Google Routes API, @vis.gl/react-google-maps |
+| **Storage** | AWS S3 (@aws-sdk/client-s3) |
+| **Auth** | JWT (NestJS Passport), bcrypt, Google OAuth |
+| **Email** | Nodemailer, Handlebars templates |
+| **Infra** | Docker Compose, Vercel (frontend deploy) |
+| **Monorepo** | pnpm 10 workspaces, @my-project/shared package |
+| **Testing** | Jest 30, Supertest, Testing Library, Playwright |
+
+---
+
+## 🚀 Getting Started
 
 ### Prerequisites
 
-- Node.js ≥ 22
-- pnpm ≥ 10
-- Docker (PostgreSQL 실행용)
+- **Node.js** ≥ 22
+- **pnpm** ≥ 10
+- **Docker** (for PostgreSQL + PostGIS)
 
 ### Installation
 
 ```bash
-# 1. PostgreSQL 실행
-docker compose up -d
+# Clone the repository
+git clone https://github.com/LSJ0621/hidden-bar.git
+cd hidden-bar
 
-# 2. 환경변수 설정
-cp backend/.env.example backend/.env
-cp frontend/.env.example frontend/.env
-
-# 3. 의존성 설치
+# Install all dependencies (from the monorepo root)
 pnpm install
 
-# 4. DB 마이그레이션
+# Set up environment variables
+cp backend/.env.example backend/.env
+cp frontend/.env.example frontend/.env
+# Edit .env files with your own API keys (Google Maps, AWS S3, etc.)
+
+# Start PostgreSQL with PostGIS via Docker
+docker compose up -d
+
+# Run database migrations
 cd backend && pnpm migration:run && cd ..
 
-# 5. 개발 서버 실행
-pnpm dev:backend   # http://localhost:4000
-pnpm dev:frontend  # http://localhost:3000
+# Start development servers
+pnpm dev:backend   # Backend  → http://localhost:4000
+pnpm dev:frontend  # Frontend → http://localhost:3000
 ```
+
+---
+
+## 📁 Project Structure
+
+```
+HiddenBar/
+├── backend/                # NestJS API server
+│   └── src/
+│       ├── auth/           # JWT auth & Google OAuth
+│       ├── bars/           # Bar CRUD
+│       ├── bookmarks/      # Bookmark management
+│       ├── maps/           # Google Maps integration
+│       ├── search/         # Multi-mode search
+│       ├── reviews/        # Review system
+│       ├── photos/         # Image upload (S3)
+│       ├── admin/          # Admin dashboard API
+│       ├── entities/       # TypeORM entities
+│       ├── migrations/     # DB migrations
+│       └── seeds/          # Data seeders
+├── frontend/               # Next.js web client
+│   └── src/
+│       ├── app/            # App Router pages
+│       │   ├── (auth)/     # Login, signup, OAuth
+│       │   └── (main)/     # Home, search, bars, directions
+│       ├── components/     # UI & feature components
+│       ├── hooks/          # Custom hooks & TanStack Query
+│       ├── store/          # Redux store
+│       ├── lib/            # API client & utilities
+│       └── types/          # TypeScript definitions
+├── packages/
+│   └── shared/             # Shared types & constants
+├── docker/                 # Docker configurations
+├── docs/                   # Documentation
+├── docker-compose.yml
+├── pnpm-workspace.yaml
+└── package.json
+```
+
+---
+
+## 🔗 Related
+
+- 🌐 **Live Demo** — [hidden-bar-frontend.vercel.app](https://hidden-bar-frontend.vercel.app)
+
+---
+
+<div align="center">
+
+Built with ❤️ by [LSJ0621](https://github.com/LSJ0621)
+
+</div>

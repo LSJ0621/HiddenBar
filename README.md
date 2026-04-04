@@ -4,6 +4,8 @@
 
 **Discover hidden local bars in Southeast Asia — search, explore, and get directions**
 
+🌐 [www.hiddenbar.site](https://www.hiddenbar.site)
+
 ![NestJS](https://img.shields.io/badge/NestJS-11-E0234E?style=flat-square&logo=nestjs&logoColor=white)
 ![Next.js](https://img.shields.io/badge/Next.js-16-000000?style=flat-square&logo=next.js&logoColor=white)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?style=flat-square&logo=typescript&logoColor=white)
@@ -19,7 +21,7 @@
 ![Deploy](https://img.shields.io/badge/Deploy-Vercel-000000?style=flat-square&logo=vercel&logoColor=white)
 ![License](https://img.shields.io/badge/License-UNLICENSED-gray?style=flat-square)
 
-[Demo](#-demo) · [Features](#-key-features) · [Architecture](#️-architecture) · [Tech Stack](#️-tech-stack) · [Getting Started](#-getting-started) · [Project Structure](#-project-structure) · [Related](#-related)
+[Demo](#-demo) · [Features](#-key-features) · [Architecture](#️-architecture) · [Tech Stack](#️-tech-stack) · [Getting Started](#-getting-started) · [Docs](#-documentation)
 
 </div>
 
@@ -27,17 +29,22 @@
 
 ## 📸 Demo
 
-### Map Pin Search
-
-https://github.com/user-attachments/assets/049d559f-dd09-4efa-835f-8fdd3f1449f0
-
-### Step-by-step Directions
-
-https://github.com/user-attachments/assets/e5aab041-fc77-412e-885f-b6c0d95d0042
-
-### Route Alternatives
-
-https://github.com/user-attachments/assets/0570193e-f16a-46ea-a93c-93c6286744d3
+<table>
+<tr>
+<td width="33%" align="center">
+<b>Map Pin Search</b><br><br>
+<video src="https://github.com/user-attachments/assets/049d559f-dd09-4efa-835f-8fdd3f1449f0" width="250" autoplay loop muted></video>
+</td>
+<td width="33%" align="center">
+<b>Step-by-step Directions</b><br><br>
+<video src="https://github.com/user-attachments/assets/e5aab041-fc77-412e-885f-b6c0d95d0042" width="250" autoplay loop muted></video>
+</td>
+<td width="33%" align="center">
+<b>Route Alternatives</b><br><br>
+<video src="https://github.com/user-attachments/assets/0570193e-f16a-46ea-a93c-93c6286744d3" width="250" autoplay loop muted></video>
+</td>
+</tr>
+</table>
 
 ---
 
@@ -75,7 +82,7 @@ https://github.com/user-attachments/assets/0570193e-f16a-46ea-a93c-93c6286744d3
 | **Storage** | AWS S3 (@aws-sdk/client-s3) |
 | **Auth** | JWT (NestJS Passport), bcrypt, Google OAuth |
 | **Email** | Nodemailer, Handlebars templates |
-| **Infra** | Docker Compose, Vercel (frontend deploy) |
+| **Infra** | Docker Compose, Vercel (frontend), Railway (backend) |
 | **Monorepo** | pnpm 10 workspaces, @my-project/shared package |
 | **Testing** | Jest 30, Supertest, Testing Library, Playwright |
 
@@ -117,47 +124,16 @@ pnpm dev:frontend  # Frontend → http://localhost:3000
 
 ---
 
-## 📁 Project Structure
+## 📚 Documentation
 
-```
-HiddenBar/
-├── backend/                # NestJS API server
-│   └── src/
-│       ├── auth/           # JWT auth & Google OAuth
-│       ├── bars/           # Bar CRUD
-│       ├── bookmarks/      # Bookmark management
-│       ├── maps/           # Google Maps integration
-│       ├── search/         # Multi-mode search
-│       ├── reviews/        # Review system
-│       ├── photos/         # Image upload (S3)
-│       ├── admin/          # Admin dashboard API
-│       ├── entities/       # TypeORM entities
-│       ├── migrations/     # DB migrations
-│       └── seeds/          # Data seeders
-├── frontend/               # Next.js web client
-│   └── src/
-│       ├── app/            # App Router pages
-│       │   ├── (auth)/     # Login, signup, OAuth
-│       │   └── (main)/     # Home, search, bars, directions
-│       ├── components/     # UI & feature components
-│       ├── hooks/          # Custom hooks & TanStack Query
-│       ├── store/          # Redux store
-│       ├── lib/            # API client & utilities
-│       └── types/          # TypeScript definitions
-├── packages/
-│   └── shared/             # Shared types & constants
-├── docker/                 # Docker configurations
-├── docs/                   # Documentation
-├── docker-compose.yml
-├── pnpm-workspace.yaml
-└── package.json
-```
-
----
-
-## 🔗 Related
-
-- 🌐 **Live Demo** — [hidden-bar-frontend.vercel.app](https://hidden-bar-frontend.vercel.app)
+| Document | Description |
+|----------|-------------|
+| [Architecture Overview](./docs/architecture/) | System architecture, API specs, database schema |
+| [Frontend Overview](./docs/architecture/frontend-overview.md) | App Router structure, components, state management |
+| [API Reference](./docs/architecture/api/) | Endpoint specs by feature module |
+| [Database Schema](./docs/architecture/database/) | Entity definitions, relations, PostGIS usage |
+| [Testing Strategy](./docs/testing/) | Test infrastructure, coverage matrix, E2E scenarios |
+| [Design System](./docs/frontend/design-system.md) | UI components, tokens, layout conventions |
 
 ---
 

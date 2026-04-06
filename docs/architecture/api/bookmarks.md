@@ -1,6 +1,6 @@
 # 북마크 API (SPEC-02)
 
-> 관련 문서: [공통 규칙](./common.md) · [DB: 북마크](../database.md) · [테스트: 북마크](../../testing/scenarios/bookmarks.md)
+> 관련 문서: [공통 규칙](./common.md) · [DB: 북마크](../database/bookmarks.md) · [테스트: 북마크](../../testing/scenarios/bookmarks.md)
 
 ---
 

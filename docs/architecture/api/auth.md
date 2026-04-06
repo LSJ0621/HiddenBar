@@ -1,6 +1,6 @@
 # 인증 API (SPEC-01)
 
-> 관련 문서: [공통 규칙](./common.md) · [DB: 인증](../database.md) · [테스트: 인증](../../testing/scenarios/auth.md)
+> 관련 문서: [공통 규칙](./common.md) · [DB: 인증](../database/auth.md) · [테스트: 인증](../../testing/scenarios/auth.md)
 
 ---
 

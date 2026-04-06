@@ -166,7 +166,7 @@ erDiagram
     }
 
     bar_review_stats {
-        int barId PK FK
+        int barId PK,FK
         int reviewCount "default: 0"
         numeric ratingAvg "precision 3 scale 2, default: 0"
         int rating1Count "default: 0"

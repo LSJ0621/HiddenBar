@@ -1,6 +1,6 @@
 # 리뷰 신고 API (SPEC-07)
 
-> 관련 문서: [공통 규칙](./common.md) · [DB: 리뷰 신고](../database.md) · [테스트: 리뷰 신고](../../testing/scenarios/reviews.md)
+> 관련 문서: [공통 규칙](./common.md) · [DB: 리뷰 신고](../database/review-reports.md) · [테스트: 리뷰 신고](../../testing/scenarios/reviews.md)
 
 ---
 

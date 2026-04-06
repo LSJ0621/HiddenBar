@@ -112,7 +112,7 @@ PostGIS 공간 검색과 Google Routes API를 결합하여
 | 구분 | 프레임워크 | 스위트 | 테스트 수 |
 |------|-----------|--------|----------|
 | 백엔드 단위 테스트 | Jest | 41 | 607 |
-| 백엔드 E2E | Jest + Supertest | 10 | — |
+| 백엔드 E2E | Jest + Supertest | 10 | 317 |
 | 프론트엔드 단위 테스트 | Jest + Testing Library | 26 | 307 |
 | 프론트엔드 E2E | Playwright | 10 | 227 |
 
@@ -134,8 +134,8 @@ PostGIS 공간 검색과 Google Routes API를 결합하여
 
 ```bash
 # 저장소 클론
-git clone https://github.com/LSJ0621/hidden-bar.git
-cd hidden-bar
+git clone https://github.com/LSJ0621/HiddenBar.git
+cd HiddenBar
 
 # 의존성 설치 (모노레포 루트에서)
 pnpm install

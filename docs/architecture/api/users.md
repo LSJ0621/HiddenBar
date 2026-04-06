@@ -1,6 +1,6 @@
 # 사용자 프로필 API (SPEC-01)
 
-> 관련 문서: [공통 규칙](./common.md) · [DB: 사용자](../database.md) · [테스트: 프로필](../../testing/scenarios/profile.md)
+> 관련 문서: [공통 규칙](./common.md) · [DB: 사용자](../database/README.md) · [테스트: 프로필](../../testing/scenarios/profile.md)
 
 ---
 

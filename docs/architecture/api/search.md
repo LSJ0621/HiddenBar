@@ -1,6 +1,6 @@
 # 검색 API (SPEC-03)
 
-> 관련 문서: [공통 규칙](./common.md) · [DB: 검색](../database.md) · [테스트: 검색](../../testing/scenarios/search.md)
+> 관련 문서: [공통 규칙](./common.md) · [DB: 검색](../database/README.md) · [테스트: 검색](../../testing/scenarios/search.md)
 
 ---
 

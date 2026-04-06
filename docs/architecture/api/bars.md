@@ -1,6 +1,6 @@
 # 가게(술집) API (SPEC-02 + SPEC-04 nearby)
 
-> 관련 문서: [공통 규칙](./common.md) · [DB: 가게](../database.md) · [테스트: 가게](../../testing/scenarios/bars.md)
+> 관련 문서: [공통 규칙](./common.md) · [DB: 가게](../database/bars.md) · [테스트: 가게](../../testing/scenarios/bars.md)
 
 ---
 

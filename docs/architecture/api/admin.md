@@ -1,6 +1,6 @@
 # 관리자 API (SPEC-05)
 
-> 관련 문서: [공통 규칙](./common.md) · [DB: 관리자](../database.md) · [테스트: 관리자](../../testing/scenarios/admin.md)
+> 관련 문서: [공통 규칙](./common.md) · [DB: 관리자](../database/admin.md) · [테스트: 관리자](../../testing/scenarios/admin.md)
 
 > 모든 `/api/v1/admin/*` 엔드포인트는 `Role.ADMIN` 권한 필요.
 > 인증: `Cookie: accessToken` (ADMIN 역할)

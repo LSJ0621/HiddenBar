@@ -1,6 +1,6 @@
 # 지도 & 길안내 API (SPEC-04)
 
-> 관련 문서: [공통 규칙](./common.md) · [DB: 지도](../database.md) · [테스트: 지도](../../testing/scenarios/maps.md)
+> 관련 문서: [공통 규칙](./common.md) · [DB: 지도](../database/README.md) · [테스트: 지도](../../testing/scenarios/maps.md)
 
 > **참고**: `GET /api/v1/bars/nearby` (근처 바 검색)는 [bars.md](./bars.md)에 포함되어 있다.
 

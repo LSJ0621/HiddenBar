@@ -1,6 +1,6 @@
 # 리뷰 API (SPEC-06)
 
-> 관련 문서: [공통 규칙](./common.md) · [DB: 리뷰](../database.md) · [테스트: 리뷰](../../testing/scenarios/reviews.md)
+> 관련 문서: [공통 규칙](./common.md) · [DB: 리뷰](../database/reviews.md) · [테스트: 리뷰](../../testing/scenarios/reviews.md)
 
 ---
 

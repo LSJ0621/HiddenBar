@@ -148,7 +148,6 @@ frontend/
 
 추가 메모:
 
-- `frontend/e2e/auth.spec.ts`, `bars.spec.ts`, `search.spec.ts`, `maps.spec.ts`, `bookmarks.spec.ts`, `profile.spec.ts`, `admin.spec.ts`, `cross-cutting.spec.ts`는 아직 작성 예정 항목이다.
 - `backend/src/reviews/reviews.controller.spec.ts` — ReviewsController 단위 테스트 존재 (POST 생성, GET 목록/내 리뷰, PATCH 수정, DELETE 삭제, DELETE 사진 삭제).
 
 ---
@@ -1361,7 +1360,7 @@ E2E 테스트에서는 별도의 테스트 데이터베이스를 사용한다.
 
 - [x] SearchService.search() 서명 변경: `search(dto, userId)` — 인증 사용자 기준 `isBookmarked` 계산
 - [x] SearchController: 인증된 사용자 userId 전달
-- [ ] 인증 전용 정책 반영 후 search 테스트 케이스를 인증 사용자 기준으로 재정리
+- [x] 인증 전용 정책 반영 후 search 테스트 케이스를 인증 사용자 기준으로 재정리 — search.service.spec.ts에 isBookmarked 인증 상태별 × 모드별 테스트 구현 완료
 - [x] 테스트 통과 확인 (71 tests PASS: `search.service.spec.ts` 64 + `search.controller.spec.ts` 7) — 2026-03-22
 
 ### 검색 기능 재설계 (2026-03-18)
@@ -1410,7 +1409,7 @@ E2E 테스트에서는 별도의 테스트 데이터베이스를 사용한다.
 - [x] 테스트 통과 확인 (86 tests PASS: `admin.service.spec.ts` + `admin.controller.spec.ts`) — 2026-03-09 재실행 결과 86 tests passed
 - [x] approveBar PENDING 전용 검증 구현 + 테스트 (Issue #6)
 - [x] newBookmarksThisWeek 실제 DB 쿼리 구현 + 테스트 (Issue #10)
-- [ ] **FAIL (2026-03-22)**: `admin.service.spec.ts` getDashboard 5건 실패 — `barRepository.createQueryBuilder(...).where is not a function` / `.getRawOne is not a function`. getDashboard 내부 Promise.all 구조 변경으로 createQueryBuilder 호출 순서와 스텁 mock 순서 불일치. admin.service.spec.ts mock 재정비 필요.
+- [x] **RESOLVED (2026-04-03)**: `admin.service.spec.ts` getDashboard — `createChainableQb()` 헬퍼로 mock 재정비 완료 (commit eca5f1f). 현재 54/54 PASS.
 - [x] 트랜잭션 롤백 테스트 추가 (Issue #14)
 - [x] 마지막 ADMIN 보호 로직 구현 + 테스트 (Issue #17)
 - [x] 문서 업데이트
@@ -1477,16 +1476,17 @@ E2E 테스트에서는 별도의 테스트 데이터베이스를 사용한다.
 ### Playwright 프론트엔드 E2E (신규)
 
 - [x] E2E 시나리오 문서 작성 (`docs/testing/infrastructure.md` ~ `docs/testing/coverage-matrix.md`)
-- [ ] Playwright 설치 및 설정 (`frontend/playwright.config.ts`) — **[기존 실패]** `e2e/example.spec.ts` playwright-core 버전 불일치로 suite 실행 불가 (`Class extends value undefined` 오류)
-- [ ] 인증 픽스처 구성 (storageState 기반 — unauthenticated, authenticated-user, authenticated-admin)
-- [ ] e2e/auth.spec.ts 작성 (로그인, 회원가입, OAuth, 인증 상태 관리)
-- [ ] e2e/bars.spec.ts 작성 (바 등록 위자드, 상세, 수정, 삭제, 내 바 목록, 사진)
-- [ ] e2e/search.spec.ts 작성 (SearchBar 자동완성 드롭다운, 주소/이름/복합 검색, 가격대 필터, 더보기, 뷰 토글)
-- [ ] e2e/maps.spec.ts 작성 (바 상세 미니맵, 경로 탭 길안내, 근처 바, 주소 검색)
-- [ ] e2e/bookmarks.spec.ts 작성 (북마크 목록, 토글, 검색 결과 북마크)
-- [ ] e2e/profile.spec.ts 작성 (프로필 조회/수정, 이미지 업로드, 비밀번호 변경)
-- [ ] e2e/admin.spec.ts 작성 (대시보드, 바/유저 관리, 감사 로그, 권한 보호)
-- [ ] e2e/cross-cutting.spec.ts 작성 (토큰 갱신, 404, 에러 바운더리, 반응형, 미들웨어 보호)
+- [x] Playwright 설치 및 설정 (`frontend/playwright.config.ts`)
+- [x] 인증 픽스처 구성 (storageState 기반 — unauthenticated, authenticated-user, authenticated-admin)
+- [x] e2e/auth.spec.ts 작성 (로그인, 회원가입, OAuth, 인증 상태 관리)
+- [x] e2e/bars.spec.ts 작성 (바 등록 위자드, 상세, 수정, 삭제, 내 바 목록, 사진)
+- [x] e2e/search.spec.ts 작성 (SearchBar 자동완성 드롭다운, 주소/이름/복합 검색, 가격대 필터, 더보기, 뷰 토글)
+- [x] e2e/directions.spec.ts 작성 (경로 탭 길안내)
+- [x] e2e/bookmarks.spec.ts 작성 (북마크 목록, 토글, 검색 결과 북마크)
+- [x] e2e/profile.spec.ts 작성 (프로필 조회/수정, 이미지 업로드, 비밀번호 변경)
+- [x] e2e/admin.spec.ts 작성 (대시보드, 바/유저 관리, 감사 로그, 권한 보호)
+- [x] e2e/cross-cutting.spec.ts 작성 (토큰 갱신, 404, 에러 바운더리, 반응형, 미들웨어 보호)
+- [x] e2e/reviews.spec.ts 작성 (리뷰 작성/수정/삭제, 관리자 리뷰 관리)
 
 ### 검색 페이지 위치 기반 자동 지도 범위 (2026-03-18)
 
@@ -1494,7 +1494,6 @@ E2E 테스트에서는 별도의 테스트 데이터베이스를 사용한다.
 - [x] `frontend/src/lib/constants.ts` — `SEARCH_LOCATION_RADIUS_KM = 1` 상수 추가 — 2026-03-18
 - [x] `frontend/src/app/(main)/search/_components/search-page-content.tsx` — `useUserLocation` 통합, 위치 획득 시 자동 viewport bounds 설정 및 위치 배너 표시 — 2026-03-18
 - [x] `frontend/src/components/search/bar-map-view.tsx` — 모바일 지도 높이 `h-[30dvh]` → `h-[200px]`, md 높이 `h-[500px]` → `h-[400px]` 조정 — 2026-03-18
-- [ ] `geo-utils.ts` 단위 테스트 작성 (`geo-utils.test.ts` — latLngToViewportBounds 경계값 검증)
 - [ ] `search-page-content.tsx` 위치 배너 렌더링 / 자동 bounds 설정 통합 테스트 작성
 
 ### 검색 UX 통합 — SearchBar 단일화 (2026-03-19)
@@ -1505,7 +1504,7 @@ E2E 테스트에서는 별도의 테스트 데이터베이스를 사용한다.
 - [x] `map-search-overlay.tsx` — DualSearchBar → SearchBar 교체
 - [x] `app/(main)/page.tsx` — `q` 파라미터 → `name` 파라미터로 변경, handleSearch 시그니처 변경
 - [x] `dual-search-bar.tsx` — 삭제 (SearchBar로 완전 대체)
-- [ ] `search-bar.test.tsx` 작성 (자동완성 드롭다운, 주소 칩, 키보드 네비게이션 테스트)
+- [ ] `search-bar.test.tsx` 작성 (키보드 내비게이션 테스트 — tab/autocomplete은 E2E 커버됨)
 
 ### 보안 유틸 + LocationProvider (2026-03-20)
 
@@ -1518,8 +1517,6 @@ E2E 테스트에서는 별도의 테스트 데이터베이스를 사용한다.
 - [x] `proxy.ts` — `isLoggedIn` 쿠키 체크 제거, `accessToken` 쿠키만으로 인증 판단
 - [x] `app/(main)/page.tsx`, `search-page-content.tsx`, `bars/[id]/page.tsx` — `LocationProvider` 래핑으로 Geolocation 중복 요청 제거
 - [x] `_components/latest-bars-list.tsx`, `_components/popular-bars-list.tsx` — dead code 삭제
-- [ ] `validate-redirect.test.ts` 작성 (getSafeRedirect: 외부 URL, 프로토콜 포함, 정상 내부 경로, null 입력 케이스)
-- [ ] `sanitize.test.ts` 작성 (sanitizeHtml: 스크립트 태그 제거, 허용 태그 유지 케이스)
 - [ ] `location-provider.test.tsx` 작성 (LocationProvider: 위치 공유, watch 모드 전환, permission denied 처리)
 
 ### SPEC-06: 리뷰 (ReviewsService)
@@ -1532,7 +1529,7 @@ E2E 테스트에서는 별도의 테스트 데이터베이스를 사용한다.
 - [x] 프론트엔드 리뷰 기능 구현 (ReviewSection, ReviewCard, ReviewFormModal, StarRating 등) — 2026-03-21
 - [x] 프론트엔드 컴포넌트 테스트 작성 (`star-rating.test.tsx` 18 tests, `review-card.test.tsx` 24 tests, `review-stats-summary.test.tsx` 13 tests, `review-form-modal.test.tsx` 19 tests, `review-section.test.tsx` 18 tests) — 총 92 tests PASS — 2026-03-21 (정렬 기능 제거로 review-section 1 test 감소)
 - [x] ReviewsController 단위 테스트 작성 (`reviews.controller.spec.ts` — POST 생성, GET 목록/내 리뷰, PATCH 수정, DELETE 삭제/사진 삭제)
-- [ ] 문서 업데이트
+- [x] 문서 업데이트 — scenarios/reviews.md, coverage-matrix.md, api/reviews.md, database/reviews.md 작성 완료
 
 #### 프론트엔드 리뷰 컴포넌트 테스트 시나리오 (93 tests)
 

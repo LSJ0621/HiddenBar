@@ -144,7 +144,7 @@
 - ~~북마크~~ → `bookmarks.spec.ts` (구현 완료)
 - ~~프로필~~ → `profile.spec.ts` (구현 완료)
 - ~~관리자 화면~~ → `admin.spec.ts` (구현 완료)
-- ~~리뷰 작성/수정/삭제 및 관리자 리뷰 관리~~ → `reviews.spec.ts` + `review-reports.spec.ts` (구현 완료)
+- ~~리뷰 작성/수정/삭제 및 관리자 리뷰 관리~~ → `reviews.spec.ts` (구현 완료)
 
 ## 4. 문서 정합성 기준
 

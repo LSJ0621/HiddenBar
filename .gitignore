@@ -41,6 +41,7 @@ frontend/.claude/
 docs/*
 !docs/architecture/
 !docs/architecture.png
+!docs/overview.jpeg
 !docs/gif/
 !docs/testing/
 

@@ -47,11 +47,6 @@ NestJS(backend) + Next.js(frontend) 풀스택 프로젝트. 패키지 매니저�
 - 절대 경로 import 사용 (`@/` alias)
 - 모든 exported 함수에 JSDoc 주석 작성
 
-## TDD Workflow
-1. 실패하는 테스트 코드 작성 (백엔드: `*.spec.ts` / 프론트엔드: `*.test.tsx`)
-2. 테스트 통과하는 최소 코드 구현
-3. 리팩토링
-
 ## Framework Conventions (코드 분석 시 주의사항)
 - Next.js는 file-based convention 프레임워크로, 특정 파일명을 프레임워크가 자동 인식한다. 미사용 코드 판별 시 import 추적만으로 판단하지 말고, Next.js 공식 문서의 File Conventions를 반드시 확인할 것
 - NestJS는 데코레이터 + DI 기반으로 모듈이 연결되므로, 명시적 import 없이 주입되는 provider가 있을 수 있음

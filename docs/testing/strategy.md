@@ -22,11 +22,14 @@
 
 ### 1.2 테스트 원칙
 
-- **TDD 방식**: 실패 테스트 작성 -> 구현 -> 테스트 통과 -> 리팩토링
 - **AAA 패턴**: Arrange(준비) -> Act(실행) -> Assert(검증) 구조 사용
 - **테스트 격리**: 각 테스트는 독립적으로 실행 가능해야 함
 - **Mock 전략**: Service 단위 테스트에서는 TypeORM Repository, 외부 API 클라이언트를 mock 처리
-- **테스트 커버리지 목표**: 서비스 로직 90% 이상, 컨트롤러 80% 이상
+- **테스트 커버리지 목표**:
+  - 개별 파일 단위: 서비스 로직 90% 이상, 컨트롤러 80% 이상
+  - 프로젝트 전체 하한선 (Jest `coverageThreshold`로 강제): Statements 85%, Branches 75%, Functions 80%, Lines 85%
+  - `coveragePathIgnorePatterns` 제외 대상: migrations, seeds, common/init, main.ts, data-source.ts, *.module.ts, *.entity.ts, external/mocks/
+  - 제외 사유: DI 설정(module), 스키마 정의(entity — lifecycle hook은 E2E에서 커버), 인프라 코드(migrations, seeds, init), 테스트 헬퍼(mocks)
 
 ### 1.3 테스트 파일 네이밍
 
@@ -1255,7 +1258,7 @@ E2E 테스트에서는 별도의 테스트 데이터베이스를 사용한다.
 
 ---
 
-## 4. TDD 진행 체크리스트
+## 4. 테스트 진행 체크리스트
 
 ### SPEC-01: 회원/인증
 

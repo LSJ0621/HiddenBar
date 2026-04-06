@@ -191,19 +191,23 @@ describe('EmailVerificationService', () => {
     });
 
     it('should set expiresAt to 3 minutes from now', async () => {
-      (bcrypt.hash as jest.Mock).mockResolvedValue('hashed-code');
+      jest.useFakeTimers();
+      try {
+        const now = new Date('2026-04-06T00:00:00.000Z');
+        jest.setSystemTime(now);
+        (bcrypt.hash as jest.Mock).mockResolvedValue('hashed-code');
 
-      await service.sendCode(
-        'test@example.com',
-        EmailVerificationPurpose.SIGNUP,
-      );
+        await service.sendCode(
+          'test@example.com',
+          EmailVerificationPurpose.SIGNUP,
+        );
 
-      const savedEntity = repo.create.mock.calls[0][0];
-      const now = new Date();
-      const diff =
-        (savedEntity.expiresAt.getTime() - now.getTime()) / 1000 / 60;
-      expect(diff).toBeGreaterThan(2.5);
-      expect(diff).toBeLessThanOrEqual(3.1);
+        const savedEntity = repo.create.mock.calls[0][0];
+        const expectedExpiresAt = new Date(now.getTime() + 3 * 60 * 1000);
+        expect(savedEntity.expiresAt).toEqual(expectedExpiresAt);
+      } finally {
+        jest.useRealTimers();
+      }
     });
   });
 

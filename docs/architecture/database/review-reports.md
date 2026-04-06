@@ -12,7 +12,7 @@
 |--------|------|----------|------|
 | id | int (autoincrement) | PK | 고유 식별자 |
 | reviewId | int | NOT NULL, FK → reviews.id, INDEX | 신고 대상 리뷰 |
-| reporterUserId | int | NOT NULL, FK → users.id | 신고한 사용자 |
+| reporterUserId | int | NULLABLE, FK → users.id, INDEX | 신고한 사용자 (onDelete: SET NULL) |
 | reason | enum(ReportReason) | NOT NULL | 신고 사유 (SPAM, ABUSIVE_OR_HATEFUL, SEXUAL_OR_OBSCENE, MISINFORMATION, OTHER) |
 | detail | text | NULLABLE | 신고 상세 내용 (최대 1000자) |
 | status | enum(ReportStatus) | NOT NULL, DEFAULT 'PENDING' | 처리 상태 (PENDING, RESOLVED) |
@@ -26,13 +26,16 @@
 **제약조건**
 
 - UNIQUE(`reviewId`, `reporterUserId`) — 동일 리뷰에 대한 중복 신고 방지
+- INDEX(`reviewId`) — 리뷰별 신고 조회
+- INDEX(`reporterUserId`) — 신고자별 조회
+- INDEX(`processedByAdminId`) — 처리 관리자별 조회
 - INDEX(`reviewId`, `status`) — 리뷰별 미처리 신고 조회 최적화
 - INDEX(`status`, `createdAt`) — 관리자 신고 목록 조회 최적화
 
 **관계**
 
 - `reviewId` → `reviews.id` (ManyToOne, ON DELETE CASCADE)
-- `reporterUserId` → `users.id` (ManyToOne, ON DELETE CASCADE)
+- `reporterUserId` → `users.id` (ManyToOne, ON DELETE SET NULL)
 - `processedByAdminId` → `users.id` (ManyToOne, ON DELETE SET NULL)
 
 **TypeORM 엔티티**: `backend/src/entities/review-report.entity.ts`
@@ -50,8 +53,9 @@ export class ReviewReport {
   @Column({ type: 'int' })
   reviewId: number;
 
-  @Column({ type: 'int' })
-  reporterUserId: number;
+  @Index()
+  @Column({ type: 'int', nullable: true })
+  reporterUserId: number | null;
 
   @Column({ type: 'enum', enum: ReportReason })
   reason: ReportReason;
@@ -68,6 +72,7 @@ export class ReviewReport {
   @Column({ type: 'text', nullable: true })
   resolutionNote: string | null;
 
+  @Index()
   @Column({ type: 'int', nullable: true })
   processedByAdminId: number | null;
 
@@ -84,7 +89,7 @@ export class ReviewReport {
   @JoinColumn({ name: 'reviewId' })
   review: Review;
 
-  @ManyToOne(() => User, { onDelete: 'CASCADE' })
+  @ManyToOne(() => User, { onDelete: 'SET NULL' })
   @JoinColumn({ name: 'reporterUserId' })
   reporter: User;
 

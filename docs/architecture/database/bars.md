@@ -285,6 +285,7 @@ export class MenuItem {
 | barId | int | NOT NULL, FK(bars.id) | 가게 ID |
 | deletedAt | timestamp | NULLABLE | 소프트 삭제 시각 |
 
+**인덱스**: `barId`
 **유니크 제약**: `[barId, dayOfWeek]`
 
 ```typescript
@@ -296,12 +297,14 @@ import {
   ManyToOne,
   JoinColumn,
   Unique,
+  Index,
 } from 'typeorm';
 import { DayOfWeek } from '@my-project/shared';
 import { Bar } from './bar.entity';
 
 @Entity('operating_hours')
 @Unique(['barId', 'dayOfWeek'])
+@Index(['barId'])
 export class OperatingHours {
   @PrimaryGeneratedColumn()
   id: number;

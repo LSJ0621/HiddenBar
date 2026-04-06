@@ -113,7 +113,7 @@
 - webServer:
   - backend: command 'cd ../backend && pnpm start', port 4000
   - frontend: command 'pnpm dev', port 3000
-  - reuseExistingServer: !CI (로컬에서는 기존 서버 재사용)
+  - reuseExistingServer: false
 - use:
   - trace: 'on-first-retry'
   - screenshot: 'only-on-failure'

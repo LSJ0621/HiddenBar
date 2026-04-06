@@ -107,6 +107,21 @@ PostGIS 공간 검색과 Google Routes API를 결합하여
 
 ---
 
+## 테스트
+
+| 구분 | 프레임워크 | 스위트 | 테스트 수 |
+|------|-----------|--------|----------|
+| 백엔드 단위 테스트 | Jest | 41 | 607 |
+| 백엔드 E2E | Jest + Supertest | 10 | — |
+| 프론트엔드 단위 테스트 | Jest + Testing Library | 26 | 307 |
+| 프론트엔드 E2E | Playwright | 10 | 227 |
+
+**백엔드 커버리지** (인프라 코드 제외 기준): Lines 96.90% · Statements 96.76% · Functions 90.79%
+
+자세한 테스트 전략과 시나리오는 [테스트 문서](./docs/testing/)를 참고하세요.
+
+---
+
 ## 시작하기
 
 ### 사전 요구사항
@@ -147,10 +162,9 @@ pnpm dev:frontend  # 프론트엔드 → http://localhost:3000
 
 | 문서 | 설명 |
 |------|------|
-| [아키텍처 개요](./docs/architecture/) | 시스템 아키텍처, API 명세, 데이터베이스 스키마 |
+| [아키텍처 개요](./docs/architecture/system-overview.md) | 시스템 아키텍처, API 명세, 데이터베이스 스키마 |
 | [프론트엔드 개요](./docs/architecture/frontend-overview.md) | App Router 구조, 컴포넌트, 상태 관리 |
 | [API 레퍼런스](./docs/architecture/api/) | 기능 모듈별 엔드포인트 명세 |
 | [데이터베이스 스키마](./docs/architecture/database/) | 엔티티 정의, 관계, PostGIS 활용 |
 | [테스트 전략](./docs/testing/) | 테스트 인프라, 커버리지 매트릭스, E2E 시나리오 |
-| [디자인 시스템](./docs/frontend/design-system.md) | UI 컴포넌트, 토큰, 레이아웃 규칙 |
 

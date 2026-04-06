@@ -22,10 +22,11 @@ import { BarsService } from '../bars/bars.service.js';
 import {
   BarStatus,
   Role,
+  ReviewStatus,
   AdminActionType,
   AdminBarsSortBy,
 } from '@my-project/shared';
-import { DataSource } from 'typeorm';
+import { DataSource, EntityManager } from 'typeorm';
 
 const mockBarRepository = () => ({
   findOne: jest.fn(),
@@ -303,6 +304,79 @@ describe('AdminService', () => {
 
       // (20 - 10) / 10 * 100 = 100
       expect(result.kpiCards.totalBarsChangeRate).toBe(100);
+    });
+
+    it('avgPendingWaitResult.avg가 null일 때 avgPendingWaitDays가 0이다', async () => {
+      setupDashboardMocks();
+
+      // barRepo.createQueryBuilder 순서: thisWeekBars, lastWeekBars, avgPending, barRegistration, recentPending
+      const defaultQb = createChainableQb();
+      const avgQb = createChainableQb({
+        getRawOne: jest.fn().mockResolvedValue({ avg: null }),
+      });
+      barRepo.createQueryBuilder
+        .mockReturnValueOnce(defaultQb)  // thisWeekBars
+        .mockReturnValueOnce(defaultQb)  // lastWeekBars
+        .mockReturnValueOnce(avgQb)      // avgPendingWaitResult (avg: null)
+        .mockReturnValueOnce(defaultQb)  // barRegistrationRaw
+        .mockReturnValueOnce(defaultQb); // recentPendingBars
+
+      const result = await service.getDashboard();
+
+      expect(result.kpiCards.avgPendingWaitDays).toBe(0);
+    });
+
+    it('lastWeek=0, thisWeek>0일 때 changeRate가 100이다', async () => {
+      setupDashboardMocks();
+
+      // barRepo: thisWeekBars=5, lastWeekBars=0
+      const thisWeekBarQb = createChainableQb({ getCount: jest.fn().mockResolvedValue(5) });
+      const lastWeekBarQb = createChainableQb({ getCount: jest.fn().mockResolvedValue(0) });
+      const defaultQb = createChainableQb();
+      barRepo.createQueryBuilder
+        .mockReturnValueOnce(thisWeekBarQb)  // thisWeekBars
+        .mockReturnValueOnce(lastWeekBarQb)  // lastWeekBars
+        .mockReturnValueOnce(defaultQb)      // avgPendingWaitResult
+        .mockReturnValueOnce(defaultQb)      // barRegistrationRaw
+        .mockReturnValueOnce(defaultQb);     // recentPendingBars
+
+      // userRepo: thisWeekUsers=5, lastWeekUsers=0
+      const thisWeekUserQb = createChainableQb({ getCount: jest.fn().mockResolvedValue(5) });
+      const lastWeekUserQb = createChainableQb({ getCount: jest.fn().mockResolvedValue(0) });
+      userRepo.createQueryBuilder
+        .mockReturnValueOnce(thisWeekUserQb)  // thisWeekUsers
+        .mockReturnValueOnce(lastWeekUserQb); // lastWeekUsers
+
+      const result = await service.getDashboard();
+
+      expect(result.kpiCards.totalBarsChangeRate).toBe(100);
+      expect(result.kpiCards.totalUsersChangeRate).toBe(100);
+    });
+
+    it('일요일(day=0)에도 올바르게 동작한다', async () => {
+      // 2026-04-05는 일요일
+      jest.useFakeTimers();
+      jest.setSystemTime(new Date('2026-04-05T12:00:00Z'));
+
+      try {
+        setupDashboardMocks();
+
+        const result = await service.getDashboard();
+
+        // 일요일일 때 이번 주 월요일은 2026-03-30 (6일 전)
+        const expectedMonday = '2026-03-30';
+        // barRegistrationTrend의 날짜가 30일 전부터 시작하는지 확인
+        expect(result.barRegistrationTrend).toBeDefined();
+        expect(result.barRegistrationTrend.length).toBe(30);
+
+        // trend에 expectedMonday 날짜가 포함되어야 한다
+        const mondayEntry = result.barRegistrationTrend.find(
+          (item: { date: string }) => item.date === expectedMonday,
+        );
+        expect(mondayEntry).toBeDefined();
+      } finally {
+        jest.useRealTimers();
+      }
     });
   });
 
@@ -897,6 +971,68 @@ describe('AdminService', () => {
       await expect(
         service.changeUserRole(2, mockAdmin.id, Role.USER),
       ).rejects.toThrow(ForbiddenException);
+    });
+  });
+
+  // ─── 리뷰 관리 위임 ────────────────────────────────────
+
+  describe('리뷰 관리 위임', () => {
+    let reviewsService: AdminReviewsService;
+
+    beforeEach(() => {
+      reviewsService = (service as any).reviewsService as AdminReviewsService;
+    });
+
+    it('moderateReview를 reviewsService에 위임한다', async () => {
+      const expected = { id: 10, status: 'visible' };
+      jest.spyOn(reviewsService, 'moderateReview').mockResolvedValue(expected as any);
+
+      const result = await service.moderateReview(10, ReviewStatus.VISIBLE, 1, 'good review');
+
+      expect(reviewsService.moderateReview).toHaveBeenCalledWith(10, ReviewStatus.VISIBLE, 1, 'good review');
+      expect(result).toBe(expected);
+    });
+
+    it('moderateReviewWithManager를 reviewsService에 위임한다', async () => {
+      const mockReview = { id: 5 } as Review;
+      const mockManager = {} as EntityManager;
+      const expected = { id: 5, status: 'hidden' };
+      jest.spyOn(reviewsService, 'moderateReviewWithManager').mockResolvedValue(expected as any);
+
+      const result = await service.moderateReviewWithManager(
+        mockReview, ReviewStatus.HIDDEN, 1, 'spam', mockManager,
+      );
+
+      expect(reviewsService.moderateReviewWithManager).toHaveBeenCalledWith(
+        mockReview, ReviewStatus.HIDDEN, 1, 'spam', mockManager,
+      );
+      expect(result).toBe(expected);
+    });
+
+    it('deleteReviewByAdmin를 reviewsService에 위임한다', async () => {
+      const expected = { affected: 1 };
+      jest.spyOn(reviewsService, 'deleteReviewByAdmin').mockResolvedValue(expected as any);
+
+      const result = await service.deleteReviewByAdmin(10, 1, 'inappropriate');
+
+      expect(reviewsService.deleteReviewByAdmin).toHaveBeenCalledWith(10, 1, 'inappropriate');
+      expect(result).toBe(expected);
+    });
+
+    it('deleteReviewWithManager를 reviewsService에 위임한다', async () => {
+      const mockReview = { id: 7 } as Review;
+      const mockManager = {} as EntityManager;
+      const expected = { success: true };
+      jest.spyOn(reviewsService, 'deleteReviewWithManager').mockResolvedValue(expected as any);
+
+      const result = await service.deleteReviewWithManager(
+        mockReview, 1, 'violation', mockManager,
+      );
+
+      expect(reviewsService.deleteReviewWithManager).toHaveBeenCalledWith(
+        mockReview, 1, 'violation', mockManager,
+      );
+      expect(result).toBe(expected);
     });
   });
 

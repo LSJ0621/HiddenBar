@@ -115,8 +115,6 @@ backend/src/
 │   ├── guards/
 │   │   ├── jwt-auth.guard.ts
 │   │   ├── jwt-auth.guard.spec.ts
-│   │   ├── optional-jwt-auth.guard.ts
-│   │   ├── optional-jwt-auth.guard.spec.ts
 │   │   ├── roles.guard.ts
 │   │   └── roles.guard.spec.ts
 │   ├── decorators/
@@ -504,7 +502,6 @@ graph TD
 | Guard | 위치 | 설명 |
 |-------|------|------|
 | `JwtAuthGuard` | `auth/guards/jwt-auth.guard.ts` | `@nestjs/passport`의 `AuthGuard('jwt')` 확장. `accessToken` httpOnly 쿠키에서 JWT를 읽어 검증한다 |
-| `OptionalJwtAuthGuard` | `auth/guards/optional-jwt-auth.guard.ts` | `JwtAuthGuard`의 선택적 인증 버전. `req.cookies.accessToken` 쿠키만 확인하여 토큰 유무를 판별한다 (헤더는 확인하지 않음). 토큰이 없으면 `request.user`를 `null`로 설정하고 통과시킨다. 토큰이 있으면 검증하며, 유효하지 않은 경우 `401 Unauthorized`를 반환한다. 현재 SoT 기준의 핵심 사용자 기능은 인증 전용이므로, 이 가드는 공개 헬퍼성 조회가 필요한 별도 엔드포인트에서만 제한적으로 사용한다. |
 | `RolesGuard` | `auth/guards/roles.guard.ts` | `@Roles(Role.ADMIN)` 데코레이터와 함께 사용. `Reflector`로 필요 역할 확인 후 `user.role`과 비교 |
 | `BarOwnerGuard` | `bars/guards/bar-owner.guard.ts` | `barId` 파라미터로 Bar 조회 후 `request.user.id === bar.ownerId` 확인. 바 미존재 시 `404 Not Found`, 소유자 불일치 시 `403 Forbidden` |
 | `UserThrottlerGuard` | `common/guards/user-throttler.guard.ts` | `ThrottlerGuard` 확장. `req.user.id` 기반 rate limit을 적용한다. 인증되지 않은 요청에는 IP fallback. `JwtAuthGuard` 이후에 실행되어야 한다 |
@@ -555,7 +552,6 @@ graph TD
 | `class-validator` | DTO 유효성 검증 | SPEC-01 (전역) |
 | `class-transformer` | DTO 변환 | SPEC-01 (전역) |
 | `@aws-sdk/client-s3` | S3 사진 업로드 | SPEC-02 |
-| `@aws-sdk/s3-request-presigner` | S3 pre-signed URL 생성 | SPEC-02 |
 | `multer` | 파일 업로드 처리 | SPEC-02 |
 | *(삭제됨: native fetch)* | Routes API v2 호출은 `@nestjs/axios` HttpService로 통일 | SPEC-04 |
 | `uuid` | 파일 키 생성 (S3 업로드 경로) | SPEC-02 |

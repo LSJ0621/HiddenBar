@@ -244,3 +244,47 @@
 | 4 | 리뷰 상태 변경 (바 상세 내) | 관리자 메뉴 → HIDDEN/PUBLISHED 전환 | ✅ |
 | 5 | 리뷰 삭제 (바 상세 내) | 관리자 메뉴 → 삭제 확인 → 제거 | ✅ |
 | 6 | 비관리자 접근 | 관리자 리뷰 관리 페이지 접근 시 리다이렉트 | ✅ |
+
+---
+
+## 백엔드 단위 테스트 — ReviewStatsService
+
+> 파일: `backend/src/reviews/review-stats.service.spec.ts`
+
+### incrementStats
+
+| # | 시나리오 | 기대 결과 | 기존 커버 |
+|---|---------|----------|----------|
+| 1 | rating 파라미터로 해당 별점 컬럼 증가 | totalCount + 1, ratingN + 1 | ✅ |
+| 2 | hasPhotos=true 시 photoReviewCount 증가 | photoReviewCount + 1 | ✅ |
+| 3 | hasPhotos=false 시 photoReviewCount 미변경 | photoReviewCount 유지 | ✅ |
+| 4 | rating 컬럼명 동적 바인딩 검증 | `rating1`~`rating5` 올바른 컬럼 사용 | ✅ |
+
+### decrementStats
+
+| # | 시나리오 | 기대 결과 | 기존 커버 |
+|---|---------|----------|----------|
+| 1 | rating 파라미터로 해당 별점 컬럼 감소 | totalCount - 1, ratingN - 1 | ✅ |
+| 2 | hasPhotos=true 시 photoReviewCount 감소 | photoReviewCount - 1 | ✅ |
+| 3 | GREATEST 사용으로 음수 방지 | 0 미만으로 내려가지 않음 | ✅ |
+
+### adjustRating
+
+| # | 시나리오 | 기대 결과 | 기존 커버 |
+|---|---------|----------|----------|
+| 1 | oldRating 컬럼 감소 + newRating 컬럼 증가 | 이전 별점 -1, 새 별점 +1 | ✅ |
+| 2 | old/new rating 컬럼명 동적 바인딩 검증 | 올바른 컬럼 사용 | ✅ |
+
+### adjustPhotoReviewCount
+
+| # | 시나리오 | 기대 결과 | 기존 커버 |
+|---|---------|----------|----------|
+| 1 | delta=1 시 photoReviewCount 증가 | photoReviewCount + 1 | ✅ |
+| 2 | delta=-1 시 photoReviewCount 감소 | photoReviewCount - 1 (GREATEST 0) | ✅ |
+
+### recalculate
+
+| # | 시나리오 | 기대 결과 | 기존 커버 |
+|---|---------|----------|----------|
+| 1 | PUBLISHED 리뷰만 필터하여 통계 재계산 | status=PUBLISHED 조건 적용 | ✅ |
+| 2 | barId 파라미터로 특정 바의 통계만 재계산 | 해당 barId 조건 적용 | ✅ |

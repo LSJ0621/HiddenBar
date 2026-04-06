@@ -44,6 +44,7 @@ docs/*
 !docs/overview.jpeg
 !docs/gif/
 !docs/testing/
+!docs/frontend/
 
 # PRD (내부 제품 요구사항)
 prd/

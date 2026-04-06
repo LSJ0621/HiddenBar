@@ -18,7 +18,7 @@ class SignupDto {
   @IsString()
   @MinLength(8)
   @MaxLength(50)
-  @Matches(/^(?=.*[a-zA-Z])(?=.*\d)/) // 영문+숫자 조합
+  @Matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/) // 영소문자+영대문자+숫자 조합
   password: string;
 
   @IsString()

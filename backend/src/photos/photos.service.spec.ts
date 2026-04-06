@@ -156,6 +156,37 @@ describe('PhotosService', () => {
       expect(result.failedCount).toBe(1);
     });
 
+    it('사진 업로드 실패 시 logger.error를 호출한다', async () => {
+      barRepo.findOne.mockResolvedValue(mockBar);
+      barPhotoRepo.count.mockResolvedValue(0);
+      const file2 = {
+        ...mockFile,
+        originalname: 'test2.jpg',
+      } as Express.Multer.File;
+
+      s3Client.uploadBarPhoto
+        .mockResolvedValueOnce('https://s3.example.com/photo1.jpg')
+        .mockRejectedValueOnce(new Error('S3 upload failed'));
+
+      barPhotoRepo.save.mockResolvedValueOnce({
+        id: 1,
+        url: 'https://s3.example.com/photo1.jpg',
+        order: 0,
+        barId: 1,
+      });
+
+      const loggerSpy = jest.spyOn(
+        (service as any).logger,
+        'error',
+      );
+
+      await service.upload(1, [mockFile, file2], mockUser);
+
+      expect(loggerSpy).toHaveBeenCalledWith(
+        expect.stringContaining('사진 업로드 실패 [barId=1, index=1]'),
+      );
+    });
+
     it('should throw BadGatewayException when all photo uploads fail', async () => {
       barRepo.findOne.mockResolvedValue(mockBar);
       barPhotoRepo.count.mockResolvedValue(0);

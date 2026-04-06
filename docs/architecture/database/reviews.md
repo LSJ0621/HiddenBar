@@ -13,7 +13,7 @@
 | id | int (autoincrement) | PK | 고유 식별자 |
 | userId | int | NOT NULL, FK(users.id) | 작성자 ID |
 | barId | int | NOT NULL, FK(bars.id) | 대상 가게 ID |
-| rating | smallint | NOT NULL | 별점 (1~5) |
+| rating | smallint | NOT NULL, CHECK(rating >= 1 AND rating <= 5) | 별점 (1~5) |
 | content | text | NOT NULL | 리뷰 본문 |
 | visitedAt | date | NULLABLE | 방문 날짜 |
 | status | enum(ReviewStatus) | NOT NULL, DEFAULT 'PUBLISHED' | 리뷰 상태 |
@@ -44,6 +44,7 @@ import {
   OneToMany,
   JoinColumn,
   Index,
+  Check,
 } from 'typeorm';
 import { ReviewStatus } from '@my-project/shared';
 import { User } from './user.entity.js';
@@ -51,6 +52,7 @@ import { Bar } from './bar.entity.js';
 import { ReviewPhoto } from './review-photo.entity.js';
 
 @Entity('reviews')
+@Check('"rating" >= 1 AND "rating" <= 5')
 @Index(['barId', 'createdAt'])
 @Index(['userId', 'createdAt'])
 @Index(['barId', 'rating'])
@@ -150,7 +152,7 @@ import {
 import { Review } from './review.entity.js';
 
 @Entity('review_photos')
-@Check('"sort_order" >= 0')
+@Check('"sortOrder" >= 0')
 @Index(['reviewId', 'sortOrder'])
 @Index(['reviewId', 'deletedAt'])
 export class ReviewPhoto {

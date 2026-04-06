@@ -16,7 +16,7 @@
 | targetId | int | NOT NULL | 대상 ID (Bar 또는 User) |
 | reason | text | NULLABLE | 사유 |
 | metadata | jsonb | NULLABLE | 추가 정보 (예: { fromRole, toRole }) |
-| adminId | int | NOT NULL, FK(users.id) | 실행 관리자 ID |
+| adminId | int | NULLABLE, FK(users.id) | 실행 관리자 ID (onDelete: SET NULL) |
 | createdAt | timestamp | NOT NULL, DEFAULT CURRENT_TIMESTAMP | 생성 시각 |
 
 **인덱스**: `adminId`, `[targetType, targetId]`, `actionType`, `createdAt`
@@ -57,14 +57,14 @@ export class AdminAction {
   metadata: Record<string, any> | null;
 
   @Index()
-  @Column({ type: 'int' })
-  adminId: number;
+  @Column({ type: 'int', nullable: true })
+  adminId: number | null;
 
   @Index()
   @CreateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   createdAt: Date;
 
-  @ManyToOne(() => User, (user) => user.adminActions)
+  @ManyToOne(() => User, (user) => user.adminActions, { onDelete: 'SET NULL' })
   @JoinColumn({ name: 'adminId' })
   admin: User;
 }

@@ -4,22 +4,22 @@
 
 ## 1. 현재 존재하는 테스트
 
-### 1.1 백엔드 단위 테스트 (40 suites, 530 tests — 2026-03-25 기준 전체 통과)
+### 1.1 백엔드 단위 테스트 (41 suites, 607 tests — 2026-04-06 기준 전체 통과)
 
 | 모듈 | 파일 수 | 커버리지 범위 |
 |------|---------|--------------|
-| auth | 11 | service, controller, guards, strategy, DTO, OAuth client, password, email |
+| auth | 10 | service, controller, guards, strategy, DTO, OAuth client, password, email |
 | bars | 3 | service, controller, bar-owner guard |
 | bookmarks | 2 | service, controller |
 | search | 2 | service, controller |
 | maps | 3 | service, controller, address-search service |
-| admin | 2 | service (getDashboard, findBars, approve/reject/delete, user mgmt), controller |
+| admin | 3 | service (getDashboard, findBars, approve/reject/delete, user mgmt), controller, admin-reviews service |
 | users | 2 | service, controller |
 | photos | 2 | service, controller |
-| reviews | 2 | service, controller |
+| reviews | 3 | service, controller, review-stats service |
 | review-reports | 2 | service (submitReport 비즈니스 로직 10 시나리오), controller (POST 신고 접수 9 시나리오 + GET 관리자 목록 조회 3 시나리오 + GET 관리자 상세 조회 1 시나리오 + PATCH 관리자 처리 2 시나리오) |
-| common | 6 | configuration, pagination DTO, exception filter, file-validation pipe, soft-delete subscriber, user-throttler guard |
-| external | 2 | S3 client, Google Places client |
+| common | 6 | configuration, pagination DTO, exception filter, file-validation pipe, origin-validation middleware, user-throttler guard |
+| external | 2 | S3 client (18 tests로 보강), Google Places client |
 | app | 1 | root controller |
 
 ### 1.2 백엔드 E2E 파일 (10 suites)
@@ -37,7 +37,7 @@
 | `backend/test/review-reports.e2e-spec.ts` | 신고 접수(9: 성공/유효성/인증/권한/비즈니스), 관리자 목록(6: 조회/필터/페이지네이션/인증), 관리자 상세(4: 조회/인증/404), 관리자 처리(8: HIDDEN/note/유효성/인증/409), 통합 시나리오(7: RESTORE/DELETE/중복/집계/가시성) — 총 34 시나리오 |
 | `backend/test/reviews.e2e-spec.ts` | 리뷰 생성(16: 성공/유효성/인증/비즈니스), 리뷰 목록(9: 페이지네이션/통계/가시성), 내 리뷰(3), 리뷰 수정(8), 리뷰 삭제(6: 사진 연쇄/통계), 사진 업로드(7: 다중/제한/파일타입), 사진 삭제(5), 관리자 상태 변경(9: HIDDEN↔PUBLISHED/통계), 관리자 삭제(6) — 총 69 시나리오 |
 
-### 1.3 프론트엔드 단위 테스트 (20 suites — 2026-04-02 기준 전체 통과)
+### 1.3 프론트엔드 단위 테스트 (26 suites — 2026-04-06 기준 전체 통과)
 
 | 파일 | 커버리지 범위 |
 |------|--------------|
@@ -62,17 +62,26 @@
 | `onboarding-tooltip.test.tsx` | 메시지 렌더링 (스텝별 텍스트, 진행률), Next 버튼 표시/숨김 (waitFor 조건별), End tour 버튼, tooltip role |
 | `onboarding-dialog.test.tsx` | Welcome 다이얼로그 (제목, 버튼, startTour/skipTour 콜백), Complete 다이얼로그 (제목, Done 버튼, endTour 콜백) |
 
-### 1.4 프론트엔드 E2E 파일 (1 suite)
+### 1.4 프론트엔드 E2E 파일 (10 suites, 227 tests — 2026-04-06 기준 Playwright)
 
 | 파일 | 현재 확인 가능한 범위 |
 |------|----------------------|
 | `frontend/e2e/example.spec.ts` | 홈페이지 접근 smoke test |
+| `frontend/e2e/auth.spec.ts` | 로그인/로그아웃 |
+| `frontend/e2e/bars.spec.ts` | 바 상세, 바 등록/수정 |
+| `frontend/e2e/bookmarks.spec.ts` | 북마크 추가/삭제/목록 |
+| `frontend/e2e/search.spec.ts` | 검색, 지도 탐색, 길안내 |
+| `frontend/e2e/profile.spec.ts` | 프로필 조회/수정 |
+| `frontend/e2e/admin.spec.ts` | 관리자 화면 |
+| `frontend/e2e/reviews.spec.ts` | 리뷰 작성/수정/삭제, 관리자 리뷰 관리 |
+| `frontend/e2e/cross-cutting.spec.ts` | 크로스커팅 관심사 |
+| `frontend/e2e/directions.spec.ts` | 길안내 |
 
 ## 2. 현재 존재 테스트 기준 커버리지 메모
 
 ### 2.1 인증
 
-- 백엔드: 단위(11) + E2E 존재 — 커버리지 양호
+- 백엔드: 단위(10) + E2E 존재 — 커버리지 양호
 - 프론트: OAuth callback 단위 테스트 존재, E2E는 전용 시나리오 파일 없음
 
 ### 2.2 바 등록/상세/북마크
@@ -95,13 +104,13 @@
 
 ### 2.5 관리자
 
-- 백엔드: 단위(2) + E2E 존재
+- 백엔드: 단위(3 — service + controller + admin-reviews service) + E2E 존재
 - 리뷰 moderation E2E: `reviews.e2e-spec.ts`에서 관리자 상태 변경(9) + 관리자 삭제(6) 커버
 - 프론트 E2E 없음
 
 ### 2.6 리뷰
 
-- 백엔드: 단위(2 — service + controller) + E2E(`reviews.e2e-spec.ts` — 69 시나리오) 존재
+- 백엔드: 단위(3 — service + controller + review-stats service) + E2E(`reviews.e2e-spec.ts` — 69 시나리오) 존재
 - 시나리오 문서: `docs/testing/scenarios/reviews.md`
 - 프론트: 단위(4 — card, form-modal, stats-summary, section) 존재, E2E 없음
 
@@ -127,16 +136,15 @@
 
 ### 3.2 프론트엔드 E2E 우선 추가 대상
 
-- 로그인/로그아웃
-- 검색 접근 제어 (`/search` 인증 전용)
-- 바 상세 접근 제어 (인증 전용)
-- 바 등록/수정
-- 검색/지도 탐색 + 길안내 받기 버튼
-- 경로 탭 (검색 결과 바 목록, 개별 길안내, 모드 전환)
-- 북마크
-- 프로필
-- 관리자 화면
-- 리뷰 작성/수정/삭제 및 관리자 리뷰 관리
+- ~~로그인/로그아웃~~ → `auth.spec.ts` (구현 완료)
+- ~~검색 접근 제어 (`/search` 인증 전용)~~ → `search.spec.ts` (구현 완료)
+- ~~바 상세 접근 제어 (인증 전용)~~ → `bars.spec.ts` (구현 완료)
+- ~~바 등록/수정~~ → `bars.spec.ts` (구현 완료)
+- ~~검색/지도 탐색 + 길안내 받기 버튼~~ → `search.spec.ts` (구현 완료)
+- ~~북마크~~ → `bookmarks.spec.ts` (구현 완료)
+- ~~프로필~~ → `profile.spec.ts` (구현 완료)
+- ~~관리자 화면~~ → `admin.spec.ts` (구현 완료)
+- ~~리뷰 작성/수정/삭제 및 관리자 리뷰 관리~~ → `reviews.spec.ts` + `review-reports.spec.ts` (구현 완료)
 
 ## 4. 문서 정합성 기준
 

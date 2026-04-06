@@ -315,3 +315,50 @@
 | 2   | 미인증 접근  | `/admin` → `/login` 리다이렉트   |
 
 
+---
+
+## 백엔드 단위 테스트 — AdminReviewsService
+
+> 파일: `backend/src/admin/admin-reviews.service.spec.ts`
+
+### moderateReview
+
+| #   | 시나리오                          | 기대 결과                        | 기존 커버 |
+| --- | ----------------------------- | ---------------------------- | ----- |
+| 1   | 존재하지 않는 리뷰 ID                 | NotFoundException            | ✅     |
+| 2   | 현재 상태와 목표 상태 동일               | ConflictException            | ✅     |
+| 3   | 정상 요청 시 트랜잭션 실행              | manager.transaction 호출       | ✅     |
+
+### moderateReviewWithManager
+
+| #   | 시나리오                          | 기대 결과                        | 기존 커버 |
+| --- | ----------------------------- | ---------------------------- | ----- |
+| 1   | PUBLISHED → HIDDEN 상태 전환      | review.status = HIDDEN       | ✅     |
+| 2   | HIDDEN → PUBLISHED 상태 전환      | review.status = PUBLISHED    | ✅     |
+| 3   | 숨김 시 decrementStats 호출        | statsService.decrementStats  | ✅     |
+| 4   | 복원 시 incrementStats 호출        | statsService.incrementStats  | ✅     |
+| 5   | actionType: REVIEW_HIDDEN 기록  | 감사 로그에 올바른 actionType        | ✅     |
+| 6   | actionType: REVIEW_RESTORED 기록 | 감사 로그에 올바른 actionType        | ✅     |
+| 7   | 감사 로그 생성 (adminAction)         | manager.create + manager.save | ✅     |
+| 8   | reason 포함 감사 로그               | adminAction.reason 저장        | ✅     |
+| 9   | 변경된 리뷰 반환                     | 올바른 review 객체 반환             | ✅     |
+
+### deleteReviewByAdmin
+
+| #   | 시나리오                          | 기대 결과                        | 기존 커버 |
+| --- | ----------------------------- | ---------------------------- | ----- |
+| 1   | 존재하지 않는 리뷰 ID                 | NotFoundException            | ✅     |
+| 2   | 정상 요청 시 트랜잭션 실행              | manager.transaction 호출       | ✅     |
+
+### deleteReviewWithManager
+
+| #   | 시나리오                          | 기대 결과                        | 기존 커버 |
+| --- | ----------------------------- | ---------------------------- | ----- |
+| 1   | ReviewPhoto soft delete 실행    | manager.softDelete 호출        | ✅     |
+| 2   | 리뷰 soft delete 실행            | manager.softRemove 호출        | ✅     |
+| 3   | 사진 있는 리뷰 삭제 시 stats 호출       | decrementStats + adjustPhotoReviewCount | ✅     |
+| 4   | 사진 없는 리뷰 삭제 시 stats 호출       | decrementStats만 호출           | ✅     |
+| 5   | 감사 로그 생성 (REVIEW_DELETED)    | adminAction 저장               | ✅     |
+| 6   | reason 포함 감사 로그               | adminAction.reason 저장        | ✅     |
+
+

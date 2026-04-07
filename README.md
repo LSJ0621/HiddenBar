@@ -21,7 +21,7 @@
 ![Deploy](https://img.shields.io/badge/Deploy-Vercel-000000?style=flat-square&logo=vercel&logoColor=white)
 ![License](https://img.shields.io/badge/License-UNLICENSED-gray?style=flat-square)
 
-[개요](#-프로젝트-개요) · [데모](#-데모) · [주요 기능](#-주요-기능) · [아키텍처](#️-아키텍처) · [기술 스택](#️-기술-스택) · [시작하기](#-시작하기) · [문서](#-문서)
+[개요](#프로젝트-개요) · [데모](#데모) · [주요 기능](#주요-기능) · [기술 스택](#기술-스택) · [아키텍처](#아키텍처) · [ERD](#erd) · [테스트](#테스트) · [시작하기](#시작하기) · [문서](#문서)
 
 </div>
 
@@ -83,27 +83,57 @@ PostGIS 공간 검색과 Google Routes API를 결합하여
 
 ---
 
+## 기술 스택
+
+### Backend
+
+![NestJS](https://img.shields.io/badge/NestJS-11-E0234E?style=flat-square&logo=nestjs&logoColor=white)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.7-3178C6?style=flat-square&logo=typescript&logoColor=white)
+![TypeORM](https://img.shields.io/badge/TypeORM-0.3-FE0803?style=flat-square&logoColor=white)
+![Passport](https://img.shields.io/badge/Passport-JWT-34E27A?style=flat-square&logo=passport&logoColor=white)
+![Pino](https://img.shields.io/badge/Pino-Logger-687634?style=flat-square&logoColor=white)
+
+### Frontend
+
+![Next.js](https://img.shields.io/badge/Next.js-16-000000?style=flat-square&logo=next.js&logoColor=white)
+![React](https://img.shields.io/badge/React-19-61DAFB?style=flat-square&logo=react&logoColor=black)
+![TanStack Query](https://img.shields.io/badge/TanStack_Query-5-FF4154?style=flat-square&logo=reactquery&logoColor=white)
+![Redux Toolkit](https://img.shields.io/badge/Redux_Toolkit-2-764ABC?style=flat-square&logo=redux&logoColor=white)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-4-06B6D4?style=flat-square&logo=tailwindcss&logoColor=white)
+![shadcn/ui](https://img.shields.io/badge/shadcn/ui-Radix-000000?style=flat-square&logoColor=white)
+
+### DB
+
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-4169E1?style=flat-square&logo=postgresql&logoColor=white)
+![PostGIS](https://img.shields.io/badge/PostGIS-3.4-5A9B4E?style=flat-square&logoColor=white)
+
+### External API
+
+![Google Maps](https://img.shields.io/badge/Google-Maps_API-4285F4?style=flat-square&logo=googlemaps&logoColor=white)
+![Google Routes](https://img.shields.io/badge/Google-Routes_API-34A853?style=flat-square&logo=googlemaps&logoColor=white)
+![Google OAuth](https://img.shields.io/badge/Google-OAuth-EA4335?style=flat-square&logo=google&logoColor=white)
+![AWS S3](https://img.shields.io/badge/AWS-S3-FF9900?style=flat-square&logo=amazons3&logoColor=white)
+
+### Infra / Test
+
+![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?style=flat-square&logo=docker&logoColor=white)
+![Railway](https://img.shields.io/badge/Railway-Deploy-0B0D0E?style=flat-square&logo=railway&logoColor=white)
+![Vercel](https://img.shields.io/badge/Vercel-Deploy-000000?style=flat-square&logo=vercel&logoColor=white)
+![Jest](https://img.shields.io/badge/Jest-30-C21325?style=flat-square&logo=jest&logoColor=white)
+![Playwright](https://img.shields.io/badge/Playwright-E2E-2EAD33?style=flat-square&logo=playwright&logoColor=white)
+![pnpm](https://img.shields.io/badge/pnpm-10-F69220?style=flat-square&logo=pnpm&logoColor=white)
+
+---
+
 ## 아키텍처
 
 ![Architecture](./docs/architecture.png)
 
 ---
 
-## 기술 스택
+## ERD
 
-| 분류 | 기술 |
-|------|------|
-| **백엔드** | NestJS 11, TypeORM, Passport JWT, class-validator, Pino logger |
-| **프론트엔드** | Next.js 16 (App Router), React 19, TanStack Query 5, Redux Toolkit 2, React Hook Form + Zod |
-| **UI** | Tailwind CSS 4, shadcn/ui (Radix UI), Lucide Icons, Embla Carousel |
-| **데이터베이스** | PostgreSQL 16, PostGIS 3.4 |
-| **지도 / 위치** | Google Maps API, Google Routes API, @vis.gl/react-google-maps |
-| **스토리지** | AWS S3 (@aws-sdk/client-s3) |
-| **인증** | JWT (NestJS Passport), bcrypt, Google OAuth |
-| **이메일** | Nodemailer, Handlebars 템플릿 |
-| **인프라** | Docker Compose, Vercel (프론트엔드), Railway (백엔드) |
-| **모노레포** | pnpm 10 workspaces, @my-project/shared 패키지 |
-| **테스트** | Jest 30, Supertest, Testing Library, Playwright |
+![ERD](./docs/architecture/database/erd.png)
 
 ---
 

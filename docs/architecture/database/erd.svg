@@ -1,0 +1,357 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
+     viewBox="0 0 1300 950" width="1300" height="950">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0d1117"/>
+      <stop offset="100%" stop-color="#161b22"/>
+    </linearGradient>
+    <marker id="arrowGray" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#484f58"/>
+    </marker>
+    <marker id="arrowBlue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#1f6feb"/>
+    </marker>
+    <marker id="arrowGreen" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#3fb950"/>
+    </marker>
+    <marker id="arrowPurple" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#8b5cf6"/>
+    </marker>
+    <marker id="arrowYellow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#d29922"/>
+    </marker>
+    <style>
+      text { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+      .title { fill: #e6edf3; font-size: 14px; font-weight: 600; }
+      .label { fill: #e6edf3; font-size: 11px; font-weight: 600; }
+      .col { fill: #7d8590; font-size: 10px; }
+      .pk { fill: #d29922; font-size: 9px; font-weight: 600; }
+      .fk { fill: #8b5cf6; font-size: 9px; font-weight: 600; }
+      .rel-label { fill: #7d8590; font-size: 9px; }
+      .section { fill: #7d8590; font-size: 10px; font-weight: 600; letter-spacing: 1.5px; }
+      .footer { fill: #7d8590; font-size: 10px; font-style: italic; }
+    </style>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1300" height="950" fill="url(#bg)" rx="12"/>
+
+  <!-- =========================================== -->
+  <!-- AUTH DOMAIN (top-left) - Blue #1f6feb       -->
+  <!-- =========================================== -->
+  <text x="40" y="30" class="section">AUTH</text>
+  <line x1="80" y1="26" x2="540" y2="26" stroke="#21262d" stroke-width="1"/>
+
+  <rect x="30" y="42" width="510" height="292" rx="10" fill="#21262d" stroke="#1f6feb" stroke-width="1.5"/>
+  <rect x="30" y="42" width="510" height="28" rx="10" fill="#1f6feb" opacity="0.08"/>
+  <rect x="30" y="62" width="510" height="8" fill="#1f6feb" opacity="0.08"/>
+  <text x="50" y="62" class="title">Authentication &amp; Users</text>
+
+  <!-- email_verifications (50, 82, 220, 102) -->
+  <rect x="50" y="82" width="220" height="102" rx="6" fill="#161b22" stroke="#30363d" stroke-width="1"/>
+  <rect x="50" y="82" width="220" height="24" rx="6" fill="#1f6feb" opacity="0.06"/>
+  <rect x="50" y="100" width="220" height="6" fill="#1f6feb" opacity="0.06"/>
+  <text x="66" y="99" class="label">email_verifications</text>
+  <text x="66" y="118" class="pk">PK</text><text x="84" y="118" class="col">id</text>
+  <text x="66" y="132" class="col">email, codeHash</text>
+  <text x="66" y="146" class="col">purpose, expiresAt</text>
+  <text x="66" y="160" class="col">isUsed, failCount</text>
+  <text x="66" y="174" class="col">createdAt</text>
+
+  <!-- accounts (290, 82, 240, 88) -->
+  <rect x="290" y="82" width="240" height="88" rx="6" fill="#161b22" stroke="#30363d" stroke-width="1"/>
+  <rect x="290" y="82" width="240" height="24" rx="6" fill="#1f6feb" opacity="0.06"/>
+  <rect x="290" y="100" width="240" height="6" fill="#1f6feb" opacity="0.06"/>
+  <text x="306" y="99" class="label">accounts</text>
+  <text x="306" y="118" class="pk">PK</text><text x="324" y="118" class="col">id</text>
+  <text x="306" y="132" class="fk">FK</text><text x="324" y="132" class="col">userId → users</text>
+  <text x="306" y="146" class="col">provider, providerAccountId</text>
+  <text x="306" y="160" class="col">createdAt, deletedAt</text>
+
+  <!-- users (50, 196, 220, 116) -->
+  <rect x="50" y="196" width="220" height="116" rx="6" fill="#161b22" stroke="#1f6feb" stroke-width="1.2"/>
+  <rect x="50" y="196" width="220" height="24" rx="6" fill="#1f6feb" opacity="0.1"/>
+  <rect x="50" y="214" width="220" height="6" fill="#1f6feb" opacity="0.1"/>
+  <text x="66" y="213" class="label" fill="#58a6ff">users</text>
+  <text x="66" y="232" class="pk">PK</text><text x="84" y="232" class="col">id</text>
+  <text x="66" y="246" class="col">email (UK), passwordHash</text>
+  <text x="66" y="260" class="col">name, role, isActive</text>
+  <text x="66" y="274" class="col">profileImage</text>
+  <text x="66" y="288" class="col">createdAt, updatedAt</text>
+  <text x="66" y="302" class="col">deletedAt</text>
+
+  <!-- refresh_tokens (290, 196, 240, 88) -->
+  <rect x="290" y="196" width="240" height="88" rx="6" fill="#161b22" stroke="#30363d" stroke-width="1"/>
+  <rect x="290" y="196" width="240" height="24" rx="6" fill="#1f6feb" opacity="0.06"/>
+  <rect x="290" y="214" width="240" height="6" fill="#1f6feb" opacity="0.06"/>
+  <text x="306" y="213" class="label">refresh_tokens</text>
+  <text x="306" y="232" class="pk">PK</text><text x="324" y="232" class="col">id</text>
+  <text x="306" y="246" class="fk">FK</text><text x="324" y="246" class="col">userId → users</text>
+  <text x="306" y="260" class="col">token (UK), expiresAt</text>
+  <text x="306" y="274" class="col">createdAt, deletedAt</text>
+
+  <!-- Auth internal relationships -->
+  <!-- users -> accounts (1:N) — route up-right -->
+  <path d="M 270 230 L 280 230 L 280 132 L 288 132" stroke="#1f6feb" stroke-width="1" fill="none" marker-end="url(#arrowBlue)"/>
+  <text x="267" y="180" class="rel-label">1:N</text>
+
+  <!-- users -> refresh_tokens (1:N) — horizontal -->
+  <line x1="270" y1="246" x2="288" y2="246" stroke="#1f6feb" stroke-width="1" marker-end="url(#arrowBlue)"/>
+  <text x="274" y="241" class="rel-label">1:N</text>
+
+  <!-- =========================================== -->
+  <!-- BAR DOMAIN (top-right) - Green #3fb950      -->
+  <!-- =========================================== -->
+  <text x="590" y="30" class="section">BAR</text>
+  <line x1="622" y1="26" x2="1270" y2="26" stroke="#21262d" stroke-width="1"/>
+
+  <rect x="580" y="42" width="690" height="340" rx="10" fill="#21262d" stroke="#3fb950" stroke-width="1.5"/>
+  <rect x="580" y="42" width="690" height="28" rx="10" fill="#3fb950" opacity="0.08"/>
+  <rect x="580" y="62" width="690" height="8" fill="#3fb950" opacity="0.08"/>
+  <text x="600" y="62" class="title">Bar / Venue</text>
+
+  <!-- bars (600, 82, 260, 172) -->
+  <rect x="600" y="82" width="260" height="172" rx="6" fill="#161b22" stroke="#3fb950" stroke-width="1.2"/>
+  <rect x="600" y="82" width="260" height="24" rx="6" fill="#3fb950" opacity="0.1"/>
+  <rect x="600" y="100" width="260" height="6" fill="#3fb950" opacity="0.1"/>
+  <text x="616" y="99" class="label" fill="#3fb950">bars</text>
+  <text x="616" y="118" class="pk">PK</text><text x="634" y="118" class="col">id</text>
+  <text x="616" y="132" class="fk">FK</text><text x="634" y="132" class="col">ownerId → users</text>
+  <text x="616" y="146" class="col">name, description</text>
+  <text x="616" y="160" class="col">address, city, country</text>
+  <text x="616" y="174" class="col">latitude, longitude</text>
+  <text x="616" y="188" class="col">location (PostGIS Point)</text>
+  <text x="616" y="202" class="col">phone, website</text>
+  <text x="616" y="216" class="col">status, searchVector (tsvector)</text>
+  <text x="616" y="230" class="col">createdAt, updatedAt</text>
+  <text x="616" y="244" class="col">deletedAt</text>
+
+  <!-- bar_photos (880, 82, 190, 88) -->
+  <rect x="880" y="82" width="190" height="88" rx="6" fill="#161b22" stroke="#30363d" stroke-width="1"/>
+  <rect x="880" y="82" width="190" height="24" rx="6" fill="#3fb950" opacity="0.06"/>
+  <rect x="880" y="100" width="190" height="6" fill="#3fb950" opacity="0.06"/>
+  <text x="896" y="99" class="label">bar_photos</text>
+  <text x="896" y="118" class="pk">PK</text><text x="914" y="118" class="col">id</text>
+  <text x="896" y="132" class="fk">FK</text><text x="914" y="132" class="col">barId → bars</text>
+  <text x="896" y="146" class="col">url, order</text>
+  <text x="896" y="160" class="col">createdAt, deletedAt</text>
+
+  <!-- menu_items (880, 182, 190, 102) -->
+  <rect x="880" y="182" width="190" height="102" rx="6" fill="#161b22" stroke="#30363d" stroke-width="1"/>
+  <rect x="880" y="182" width="190" height="24" rx="6" fill="#3fb950" opacity="0.06"/>
+  <rect x="880" y="200" width="190" height="6" fill="#3fb950" opacity="0.06"/>
+  <text x="896" y="199" class="label">menu_items</text>
+  <text x="896" y="218" class="pk">PK</text><text x="914" y="218" class="col">id</text>
+  <text x="896" y="232" class="fk">FK</text><text x="914" y="232" class="col">barId → bars</text>
+  <text x="896" y="246" class="col">name, description</text>
+  <text x="896" y="260" class="col">price, currency</text>
+  <text x="896" y="274" class="col">createdAt, deletedAt</text>
+
+  <!-- operating_hours (1085, 82, 175, 102) -->
+  <rect x="1085" y="82" width="175" height="102" rx="6" fill="#161b22" stroke="#30363d" stroke-width="1"/>
+  <rect x="1085" y="82" width="175" height="24" rx="6" fill="#3fb950" opacity="0.06"/>
+  <rect x="1085" y="100" width="175" height="6" fill="#3fb950" opacity="0.06"/>
+  <text x="1101" y="99" class="label">operating_hours</text>
+  <text x="1101" y="118" class="pk">PK</text><text x="1119" y="118" class="col">id</text>
+  <text x="1101" y="132" class="fk">FK</text><text x="1119" y="132" class="col">barId → bars</text>
+  <text x="1101" y="146" class="col">dayOfWeek</text>
+  <text x="1101" y="160" class="col">openTime, closeTime</text>
+  <text x="1101" y="174" class="col">isClosed, deletedAt</text>
+
+  <!-- bar_review_stats (600, 268, 260, 102) -->
+  <rect x="600" y="268" width="260" height="102" rx="6" fill="#161b22" stroke="#30363d" stroke-width="1"/>
+  <rect x="600" y="268" width="260" height="24" rx="6" fill="#3fb950" opacity="0.06"/>
+  <rect x="600" y="286" width="260" height="6" fill="#3fb950" opacity="0.06"/>
+  <text x="616" y="285" class="label">bar_review_stats</text>
+  <text x="616" y="304" class="pk">PK</text><text x="634" y="304" class="col">barId (= FK → bars)</text>
+  <text x="616" y="318" class="col">reviewCount, ratingAvg</text>
+  <text x="616" y="332" class="col">ratingSum, photoReviewCount</text>
+  <text x="616" y="346" class="col">rating1~5Count (5 cols)</text>
+  <text x="616" y="360" class="col">updatedAt</text>
+
+  <!-- Bar internal relationships -->
+  <!-- bars -> bar_photos (1:N) -->
+  <line x1="860" y1="118" x2="878" y2="118" stroke="#3fb950" stroke-width="1" marker-end="url(#arrowGreen)"/>
+  <text x="863" y="113" class="rel-label">1:N</text>
+
+  <!-- bars -> menu_items (1:N) — route right-down -->
+  <path d="M 860 210 L 870 210 L 870 232 L 878 232" stroke="#3fb950" stroke-width="0.8" fill="none" marker-end="url(#arrowGreen)"/>
+  <text x="863" y="225" class="rel-label">1:N</text>
+
+  <!-- bars -> operating_hours (1:N) — route above cards -->
+  <path d="M 780 82 L 780 75 L 1085 75 L 1085 82" stroke="#3fb950" stroke-width="0.8" fill="none" marker-end="url(#arrowGreen)"/>
+  <text x="920" y="72" class="rel-label">1:N</text>
+
+  <!-- bars -> bar_review_stats (1:1) -->
+  <line x1="730" y1="254" x2="730" y2="266" stroke="#3fb950" stroke-width="1" marker-end="url(#arrowGreen)"/>
+  <text x="737" y="263" class="rel-label">1:1</text>
+
+  <!-- =========================================== -->
+  <!-- CROSS-DOMAIN: users -> bars (ownerId)       -->
+  <!-- =========================================== -->
+  <path d="M 270 250 L 435 250 L 435 132 L 598 132"
+        stroke="#484f58" stroke-width="1.2" stroke-dasharray="5 3" fill="none" marker-end="url(#arrowGray)"/>
+  <text x="440 " y="195" class="rel-label">1:N (owner)</text>
+
+  <!-- =========================================== -->
+  <!-- INTERACTION DOMAIN (bottom) - Purple        -->
+  <!-- =========================================== -->
+  <text x="40" y="420" class="section">INTERACTION</text>
+  <line x1="145" y1="416" x2="770" y2="416" stroke="#21262d" stroke-width="1"/>
+
+  <rect x="30" y="435" width="745" height="370" rx="10" fill="#21262d" stroke="#8b5cf6" stroke-width="1.5"/>
+  <rect x="30" y="435" width="745" height="28" rx="10" fill="#8b5cf6" opacity="0.08"/>
+  <rect x="30" y="455" width="745" height="8" fill="#8b5cf6" opacity="0.08"/>
+  <text x="50" y="455" class="title">Reviews, Bookmarks &amp; Reports</text>
+
+  <!-- bookmarks (50, 475, 200, 88) -->
+  <rect x="50" y="475" width="200" height="88" rx="6" fill="#161b22" stroke="#30363d" stroke-width="1"/>
+  <rect x="50" y="475" width="200" height="24" rx="6" fill="#8b5cf6" opacity="0.06"/>
+  <rect x="50" y="493" width="200" height="6" fill="#8b5cf6" opacity="0.06"/>
+  <text x="66" y="492" class="label">bookmarks</text>
+  <text x="66" y="511" class="pk">PK</text><text x="84" y="511" class="col">id</text>
+  <text x="66" y="525" class="fk">FK</text><text x="84" y="525" class="col">userId → users</text>
+  <text x="66" y="539" class="fk">FK</text><text x="84" y="539" class="col">barId → bars</text>
+  <text x="66" y="553" class="col">createdAt, deletedAt</text>
+
+  <!-- reviews (270, 475, 245, 144) -->
+  <rect x="270" y="475" width="245" height="144" rx="6" fill="#161b22" stroke="#8b5cf6" stroke-width="1.2"/>
+  <rect x="270" y="475" width="245" height="24" rx="6" fill="#8b5cf6" opacity="0.1"/>
+  <rect x="270" y="493" width="245" height="6" fill="#8b5cf6" opacity="0.1"/>
+  <text x="286" y="492" class="label" fill="#a78bfa">reviews</text>
+  <text x="286" y="511" class="pk">PK</text><text x="304" y="511" class="col">id</text>
+  <text x="286" y="525" class="fk">FK</text><text x="304" y="525" class="col">userId → users</text>
+  <text x="286" y="539" class="fk">FK</text><text x="304" y="539" class="col">barId → bars</text>
+  <text x="286" y="553" class="col">rating (1~5), content</text>
+  <text x="286" y="567" class="col">visitedAt, status</text>
+  <text x="286" y="581" class="col">photoCount, helpfulCount</text>
+  <text x="286" y="595" class="col">createdAt, updatedAt</text>
+  <text x="286" y="609" class="col">deletedAt</text>
+
+  <!-- review_photos (535, 475, 230, 116) -->
+  <rect x="535" y="475" width="230" height="116" rx="6" fill="#161b22" stroke="#30363d" stroke-width="1"/>
+  <rect x="535" y="475" width="230" height="24" rx="6" fill="#8b5cf6" opacity="0.06"/>
+  <rect x="535" y="493" width="230" height="6" fill="#8b5cf6" opacity="0.06"/>
+  <text x="551" y="492" class="label">review_photos</text>
+  <text x="551" y="511" class="pk">PK</text><text x="569" y="511" class="col">id</text>
+  <text x="551" y="525" class="fk">FK</text><text x="569" y="525" class="col">reviewId → reviews</text>
+  <text x="551" y="539" class="col">url, s3Key</text>
+  <text x="551" y="553" class="col">mimeType, sortOrder</text>
+  <text x="551" y="567" class="col">sizeBytes, width, height</text>
+  <text x="551" y="581" class="col">createdAt, deletedAt</text>
+
+  <!-- review_reports (270, 633, 330, 144) -->
+  <rect x="270" y="633" width="330" height="144" rx="6" fill="#161b22" stroke="#30363d" stroke-width="1"/>
+  <rect x="270" y="633" width="330" height="24" rx="6" fill="#8b5cf6" opacity="0.06"/>
+  <rect x="270" y="651" width="330" height="6" fill="#8b5cf6" opacity="0.06"/>
+  <text x="286" y="650" class="label">review_reports</text>
+  <text x="286" y="669" class="pk">PK</text><text x="304" y="669" class="col">id</text>
+  <text x="286" y="683" class="fk">FK</text><text x="304" y="683" class="col">reviewId → reviews</text>
+  <text x="286" y="697" class="fk">FK</text><text x="304" y="697" class="col">reporterUserId → users</text>
+  <text x="286" y="711" class="fk">FK</text><text x="304" y="711" class="col">processedByAdminId → users (nullable)</text>
+  <text x="286" y="725" class="col">reason, detail</text>
+  <text x="286" y="739" class="col">status, resolution</text>
+  <text x="286" y="753" class="col">resolutionNote, processedAt</text>
+  <text x="286" y="767" class="col">createdAt, updatedAt</text>
+
+  <!-- Interaction internal relationships -->
+  <!-- reviews -> review_photos (1:N) -->
+  <line x1="515" y1="525" x2="533" y2="525" stroke="#8b5cf6" stroke-width="1" marker-end="url(#arrowPurple)"/>
+  <text x="518" y="520" class="rel-label">1:N</text>
+
+  <!-- reviews -> review_reports (1:N) -->
+  <line x1="390" y1="619" x2="390" y2="631" stroke="#8b5cf6" stroke-width="1" marker-end="url(#arrowPurple)"/>
+  <text x="397" y="628" class="rel-label">1:N</text>
+
+  <!-- =========================================== -->
+  <!-- CROSS-DOMAIN FK lines (dashed gray)         -->
+  <!-- =========================================== -->
+
+  <!-- users -> bookmarks (1:N) -->
+  <path d="M 100 312 L 100 473"
+        stroke="#484f58" stroke-width="1" stroke-dasharray="5 3" fill="none" marker-end="url(#arrowGray)"/>
+  <text x="55" y="400" class="rel-label">1:N</text>
+
+  <!-- users -> reviews (1:N) -->
+  <path d="M 160 312 L 160 395 L 350 395 L 350 473"
+        stroke="#484f58" stroke-width="1" stroke-dasharray="5 3" fill="none" marker-end="url(#arrowGray)"/>
+  <text x="230" y="390" class="rel-label">1:N</text>
+
+  <!-- bars -> bookmarks (1:N) -->
+  <path d="M 620 254 L 620 380 L 150 380 L 150 473"
+        stroke="#484f58" stroke-width="1" stroke-dasharray="5 3" fill="none" marker-end="url(#arrowGray)"/>
+  <text x="380" y="375" class="rel-label">1:N</text>
+
+  <!-- bars -> reviews (1:N) -->
+  <path d="M 700 254 L 700 387 L 400 387 L 400 473"
+        stroke="#484f58" stroke-width="1" stroke-dasharray="5 3" fill="none" marker-end="url(#arrowGray)"/>
+  <text x="545" y="383" class="rel-label">1:N</text>
+
+  <!-- users -> admin_actions (1:N) -->
+  <path d="M 240 312 L 240 370 L 940 370 L 940 473"
+        stroke="#484f58" stroke-width="0.8" stroke-dasharray="4 3" fill="none" marker-end="url(#arrowGray)"/>
+  <text x="580" y="366" class="rel-label">1:N (admin)</text>
+
+  <!-- users -> review_reports (reporterUserId + processedByAdminId) -->
+  <path d="M 200 312 L 200 405 L 310 405 L 310 631"
+        stroke="#484f58" stroke-width="0.8" stroke-dasharray="4 3" fill="none" marker-end="url(#arrowGray)"/>
+  <text x="215" y="402" class="rel-label">1:N</text>
+
+  <!-- =========================================== -->
+  <!-- ADMIN DOMAIN (bottom-right) - Yellow        -->
+  <!-- =========================================== -->
+  <text x="820" y="420" class="section">ADMIN</text>
+  <line x1="870" y1="416" x2="1070" y2="416" stroke="#21262d" stroke-width="1"/>
+
+  <rect x="810" y="435" width="260" height="182" rx="10" fill="#21262d" stroke="#d29922" stroke-width="1.5"/>
+  <rect x="810" y="435" width="260" height="28" rx="10" fill="#d29922" opacity="0.08"/>
+  <rect x="810" y="455" width="260" height="8" fill="#d29922" opacity="0.08"/>
+  <text x="830" y="455" class="title">Admin Audit</text>
+
+  <!-- admin_actions (830, 475, 220, 116) -->
+  <rect x="830" y="475" width="220" height="116" rx="6" fill="#161b22" stroke="#30363d" stroke-width="1"/>
+  <rect x="830" y="475" width="220" height="24" rx="6" fill="#d29922" opacity="0.06"/>
+  <rect x="830" y="493" width="220" height="6" fill="#d29922" opacity="0.06"/>
+  <text x="846" y="492" class="label">admin_actions</text>
+  <text x="846" y="511" class="pk">PK</text><text x="864" y="511" class="col">id</text>
+  <text x="846" y="525" class="fk">FK</text><text x="864" y="525" class="col">adminId → users (nullable)</text>
+  <text x="846" y="539" class="col">actionType, targetType</text>
+  <text x="846" y="553" class="col">targetId, reason</text>
+  <text x="846" y="567" class="col">metadata (jsonb)</text>
+  <text x="846" y="581" class="col">createdAt</text>
+
+  <!-- =========================================== -->
+  <!-- LEGEND                                       -->
+  <!-- =========================================== -->
+  <rect x="30" y="830" width="600" height="75" rx="8" fill="#161b22" stroke="#30363d" stroke-width="0.8"/>
+  <text x="50" y="852" class="label" fill="#e6edf3">Legend</text>
+
+  <text x="110" y="852" class="pk">PK</text>
+  <text x="130" y="852" class="col">Primary Key</text>
+
+  <text x="230" y="852" class="fk">FK</text>
+  <text x="250" y="852" class="col">Foreign Key</text>
+
+  <line x1="340" y1="848" x2="380" y2="848" stroke="#3fb950" stroke-width="1"/>
+  <text x="388" y="852" class="col">Intra-domain FK</text>
+
+  <line x1="340" y1="872" x2="380" y2="872" stroke="#484f58" stroke-width="1" stroke-dasharray="5 3"/>
+  <text x="388" y="876" class="col">Cross-domain FK</text>
+
+  <rect x="110" y="864" width="10" height="10" rx="2" fill="#1f6feb"/>
+  <text x="126" y="874" class="col">Auth</text>
+  <rect x="170" y="864" width="10" height="10" rx="2" fill="#3fb950"/>
+  <text x="186" y="874" class="col">Bar</text>
+  <rect x="218" y="864" width="10" height="10" rx="2" fill="#8b5cf6"/>
+  <text x="234" y="874" class="col">Interaction</text>
+  <rect x="308" y="864" width="10" height="10" rx="2" fill="#d29922"/>
+  <text x="324" y="874" class="col">Admin</text>
+
+  <text x="500" y="852" class="col">1:N = One-to-Many</text>
+  <text x="500" y="876" class="col">1:1 = One-to-One</text>
+
+  <!-- Footer -->
+  <text x="650" y="935" class="footer" text-anchor="middle">HiddenBar — Database Entity-Relationship Diagram</text>
+
+</svg>

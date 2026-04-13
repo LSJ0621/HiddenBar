@@ -107,6 +107,8 @@ import { JwtAuthGuard } from './auth/guards/jwt-auth.guard.js';
         autoLoadEntities: true,
         synchronize: configService.get<boolean>('database.synchronize'),
         dropSchema: configService.get<boolean>('database.dropSchema'),
+        // 부하 테스트 Phase 1 에서 기본값(10) 이 병목 증폭 요인으로 확인됨 → 40 으로 상향.
+        extra: { max: 40 },
         ssl:
           process.env.NODE_ENV === 'production'
             ? { rejectUnauthorized: false }

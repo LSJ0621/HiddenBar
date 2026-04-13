@@ -81,6 +81,7 @@ describe('SearchService', () => {
   let barRepo: {
     query: jest.Mock;
     createQueryBuilder: jest.Mock;
+    manager: { transaction: jest.Mock };
   };
   /** BookmarkRepository mock — isBookmarked 구현 시 SearchService가 사용할 의존성 */
   let bookmarkRepo: {
@@ -89,9 +90,18 @@ describe('SearchService', () => {
   };
 
   beforeEach(async () => {
+    const barRepoQuery = jest.fn();
     barRepo = {
-      query: jest.fn(),
+      query: barRepoQuery,
       createQueryBuilder: jest.fn(),
+      // name/combined 모드의 raw 쿼리는 transaction 안에서 `SET LOCAL pg_trgm.similarity_threshold`
+      // 를 먼저 실행하므로, 테스트에서는 manager.transaction 이 콜백을 즉시 실행하도록 목한다.
+      // 콜백에 넘어가는 `mgr.query` 는 동일 jest.fn 이라 기존 assertion 이 재사용 가능하다.
+      manager: {
+        transaction: jest.fn(async (cb: (mgr: { query: jest.Mock }) => Promise<unknown>) =>
+          cb({ query: barRepoQuery }),
+        ),
+      },
     };
 
     bookmarkRepo = {
@@ -124,7 +134,8 @@ describe('SearchService', () => {
       });
 
       expect(result.mode).toBe('combined');
-      expect(barRepo.query).toHaveBeenCalledTimes(1);
+      // combined/name 모드는 SET LOCAL + 본 쿼리로 mgr.query가 2회 호출된다.
+      expect(barRepo.query).toHaveBeenCalled();
     });
 
     it('lat+lng만 제공 시 address 모드로 실행한다', async () => {
@@ -146,7 +157,7 @@ describe('SearchService', () => {
       });
 
       expect(result.mode).toBe('name');
-      expect(barRepo.query).toHaveBeenCalledTimes(1);
+      expect(barRepo.query).toHaveBeenCalled();
     });
 
     it('name, lat, lng 모두 없으면 general 모드(QueryBuilder)로 실행한다', async () => {
@@ -257,7 +268,7 @@ describe('SearchService', () => {
       expect(result.items).toHaveLength(2);
       expect(result.hasMore).toBe(false);
       expect(result.mode).toBe('name');
-      const sql = barRepo.query.mock.calls[0][0] as string;
+      const sql = barRepo.query.mock.calls.at(-1)![0] as string;
       expect(sql).toContain('similarity');
       expect(sql).toContain('ST_Distance');
     });
@@ -273,7 +284,7 @@ describe('SearchService', () => {
       expect(result.items).toHaveLength(2);
       expect(result.hasMore).toBe(false);
       expect(result.mode).toBe('name');
-      const sql = barRepo.query.mock.calls[0][0] as string;
+      const sql = barRepo.query.mock.calls.at(-1)![0] as string;
       expect(sql).toContain('similarity');
       expect(sql).not.toContain('ST_Distance');
     });
@@ -323,6 +334,39 @@ describe('SearchService', () => {
         expect.arrayContaining(['Secret']),
       );
     });
+
+    // ─── Phase 3: 짧은 prefix 분기 ───
+    it('입력 길이 < 4자이면 B-tree LIKE 경로로 분기한다 (transaction/SET LOCAL 없음)', async () => {
+      barRepo.query.mockResolvedValue([makeRawRow({ id: 1 })]);
+
+      await service.search({ name: 'Ho' });
+
+      expect(barRepo.manager.transaction).not.toHaveBeenCalled();
+      const [sql, params] = barRepo.query.mock.calls[0];
+      expect(sql).toContain("lower(b.name) LIKE $1 ESCAPE '\\'");
+      expect(sql).not.toContain('similarity(');
+      expect(sql).not.toContain('pg_trgm');
+      expect(params[0]).toBe('ho%');
+    });
+
+    it('짧은 prefix 경로에서 LIKE 메타문자(%, _, \\)는 이스케이프된다', async () => {
+      barRepo.query.mockResolvedValue([]);
+
+      await service.search({ name: '%_\\' });
+
+      const params = barRepo.query.mock.calls[0][1];
+      expect(params[0]).toBe('\\%\\_\\\\%');
+    });
+
+    it('짧은 prefix + 좌표가 있으면 distance 보조 정렬이 포함된다', async () => {
+      barRepo.query.mockResolvedValue([]);
+
+      await service.search({ name: 'Ga', userLat: 13.75, userLng: 100.5 });
+
+      const sql = barRepo.query.mock.calls[0][0] as string;
+      expect(sql).toContain('ST_Distance');
+      expect(sql).toContain('ORDER BY lower(b.name) ASC, "distanceKm" ASC');
+    });
   });
 
   // ───────────────────────────────────────────────
@@ -342,7 +386,7 @@ describe('SearchService', () => {
         radiusKm: 5,
       });
 
-      const sql = barRepo.query.mock.calls[0][0] as string;
+      const sql = barRepo.query.mock.calls.at(-1)![0] as string;
       expect(sql).toContain('similarity');
       expect(sql).toContain('ST_DWithin');
       expect(result.mode).toBe('combined');
@@ -380,6 +424,20 @@ describe('SearchService', () => {
 
       expect(result.center).toEqual({ lat: 13.75, lng: 100.5 });
       expect(result.radiusKm).toBe(8);
+    });
+
+    // ─── Phase 3: 짧은 prefix 분기 (combined) ───
+    it('combined 모드에서 짧은 prefix 는 ST_DWithin + LIKE 경로로 분기한다', async () => {
+      barRepo.query.mockResolvedValue([]);
+
+      await service.search({ name: 'Ho', lat: 13.75, lng: 100.5, radiusKm: 5 });
+
+      expect(barRepo.manager.transaction).not.toHaveBeenCalled();
+      const [sql, params] = barRepo.query.mock.calls[0];
+      expect(sql).toContain('ST_DWithin');
+      expect(sql).toContain("lower(b.name) LIKE $1 ESCAPE '\\'");
+      expect(sql).not.toContain('similarity(');
+      expect(params[0]).toBe('ho%');
     });
   });
 
